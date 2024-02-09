@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "stalpomaparthelper",
+	"version": "${version}",
+	"name": "Stalpo Mapart Helper",
+	"description": "This is a mod for managing large mapart collections",
+	"authors": [
+		"Stalpo"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "MIT",
+	"icon": "assets/stalpomaparthelper/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"net.stalpo.stalpomaparthelper.StalpoMapartHelper"
+		],
+		"fabric-datagen": [
+			"net.stalpo.stalpomaparthelper.StalpoMapartHelperDataGenerator"
+		]
+	},
+	"mixins": [
+		"stalpomaparthelper.mixins.json"
+	],
+	"accessWidener": "stalpomaparthelper.accesswidener",
+	"depends": {
+		"fabricloader": ">=0.14.22",
+		"minecraft": "~1.20.1",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}

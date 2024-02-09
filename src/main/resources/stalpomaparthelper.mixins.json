@@ -1,0 +1,15 @@
+{
+	"required": true,
+	"package": "net.stalpo.stalpomaparthelper.mixin",
+	"compatibilityLevel": "JAVA_17",
+	"mixins": [
+		"GuiContainerMixin",
+		"HandledScreenMixin",
+		"ShulkerBoxScreenHandlerMixin",
+		"MapRendererInvoker",
+		"MapTextureAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
