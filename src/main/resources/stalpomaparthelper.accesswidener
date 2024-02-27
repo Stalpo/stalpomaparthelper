@@ -1,2 +1,3 @@
 accessWidener v2 named
 accessible class net/minecraft/client/render/MapRenderer$MapTexture
+accessible method net/minecraft/client/gui/screen/ingame/AnvilScreen onRenamed (Ljava/lang/String;)V

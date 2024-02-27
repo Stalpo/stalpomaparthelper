@@ -1,6 +1,7 @@
 package net.stalpo.stalpomaparthelper;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
@@ -9,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 import org.lwjgl.glfw.GLFW;
+
+import static net.stalpo.stalpomaparthelper.NameMapCommand.registerNameMap;
 
 public class StalpoMapartHelper implements ClientModInitializer {
 	public static final String MOD_ID = "stalpomaparthelper";
@@ -21,9 +24,13 @@ public class StalpoMapartHelper implements ClientModInitializer {
 	public static boolean mapCopierToggled;
 	public static KeyBinding keyToggleSMIDownloadMode;
 	public static boolean SMIDownloadModeToggled;
+	public static KeyBinding keyToggleSMINamerMode;
+	public static boolean SMINamerModeToggled;
 	public static KeyBinding keyToggleMapLocker;
 	public static boolean mapLockerToggled;
 	public static KeyBinding keyGetSMI;
+	public static KeyBinding keyToggleMapNamer;
+	public static boolean mapNamerToggled;
 
 	@Override
 	public void onInitializeClient() {
@@ -35,9 +42,12 @@ public class StalpoMapartHelper implements ClientModInitializer {
 		keyGetSMI = registerKey("Get SMI", GLFW.GLFW_KEY_KP_4);
 		keyToggleMapCopier = registerKey("Toggle Map Copier", GLFW.GLFW_KEY_KP_5);
 		keyToggleMapLocker = registerKey("Toggle Map Locker", GLFW.GLFW_KEY_KP_6);
-		keyToggleSMIDownloadMode = registerKey("Toggle SMI Download Mode", GLFW.GLFW_KEY_KP_7);
+		keyToggleMapNamer = registerKey("Toggle Map Namer", GLFW.GLFW_KEY_KP_7);
+		keyToggleSMIDownloadMode = registerKey("Toggle SMI Download Mode", GLFW.GLFW_KEY_KP_8);
+		keyToggleSMINamerMode = registerKey("Toggle SMI Namer Mode", GLFW.GLFW_KEY_KP_9);
 
 		MapartShulker.setNextMap();
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerNameMap(dispatcher));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (keyToggleMapCopier.wasPressed()) {
@@ -65,6 +75,22 @@ public class StalpoMapartHelper implements ClientModInitializer {
 					LOGCHAT("Map locker disabled!");
 				}
 			}
+			while (keyToggleMapNamer.wasPressed()) {
+				mapNamerToggled = !mapNamerToggled;
+				if(mapNamerToggled){
+					LOGCHAT("Map namer enabled!");
+				}else{
+					LOGCHAT("Map namer disabled!");
+				}
+			}
+			while (keyToggleSMINamerMode.wasPressed()) {
+				SMINamerModeToggled = !SMINamerModeToggled;
+				if(SMINamerModeToggled){
+					LOGCHAT("SMI map namer mode enabled!");
+				}else{
+					LOGCHAT("SMI map namer mode disabled!");
+				}
+			}
 		});
 	}
 
@@ -83,11 +109,13 @@ public class StalpoMapartHelper implements ClientModInitializer {
 	}
 
 	public static void CHAT(String s){
-		MinecraftClient.getInstance().player.sendMessage(Text.literal(s), false);
+        assert MinecraftClient.getInstance().player != null;
+        MinecraftClient.getInstance().player.sendMessage(Text.literal(s), false);
 	}
 
 	public static void LOGCHAT(String s){
 		LOGGER.info(s);
-		MinecraftClient.getInstance().player.sendMessage(Text.literal(s), false);
+        assert MinecraftClient.getInstance().player != null;
+        MinecraftClient.getInstance().player.sendMessage(Text.literal(s), false);
 	}
 }
