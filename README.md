@@ -9,7 +9,7 @@ SMI (Stalpo Mapart Index) is a system used to try and archive all maparts on 2b2
 
 The current collection can be found here: https://drive.google.com/file/d/1qCfu-MCdqTcjVMLvjf98CFYK-Cb7XjYU/view?usp=sharing
 
-To use the SMI checking features download the collection and paste the folder into you .minecraft folder.
+Download the collection, extract the maparts_smi folder, and paste the folder into you .minecraft folder to be able to use the SMI features.
 
 # Feature list
 1. Map Downloader
