@@ -14,8 +14,7 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.lit
 
 public final class NameMapCommand {
     public static void registerNameMap(CommandDispatcher<FabricClientCommandSource> dispatcher){
-        dispatcher.register(literal("NameMap")
-                .requires(source -> source.hasPermissionLevel(2))
+        dispatcher.register(literal("nameMap")
                 .then(argument("x", integer())
                         .then(argument("y", integer())
                                 .then(argument("name", greedyString())
@@ -29,7 +28,7 @@ public final class NameMapCommand {
         MapartShulker.currX = 0;
         MapartShulker.currY = 0;
 
-        StalpoMapartHelper.LOGCHAT("Set next map for map namer to: \"" + name + "\"");
+        StalpoMapartHelper.CHAT("Set next map for map namer to: \"" + name + "\" with the dimensions: " + x + " by " + y);
 
         return Command.SINGLE_SUCCESS;
     }

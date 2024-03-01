@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class MapartShulker {
     public static ScreenHandler sh;
@@ -161,9 +160,9 @@ public class MapartShulker {
                     }
                 }
                 if(name == null){
-                    StalpoMapartHelper.CHAT("Slot: " + i + " MapId: " + mapId + " SMI: not in database");
+                    StalpoMapartHelper.CHAT("Slot: " + (i + 1) + " MapId: " + mapId + " SMI: not in database");
                 }else{
-                    StalpoMapartHelper.CHAT("Slot: " + i + " MapId: " + mapId + " SMI: " + name.substring(0, name.length() - 4));
+                    StalpoMapartHelper.CHAT("Slot: " + (i + 1) + " MapId: " + mapId + " SMI: " + name.substring(0, name.length() - 4));
                 }
             }
             StalpoMapartHelper.LOGCHAT("Finished getting SMIs");
@@ -182,13 +181,11 @@ public class MapartShulker {
 
         File screenshot = new File(screensDir, FileName);
 
-        //Util.getIoWorkerExecutor().execute(() -> {
-            try {
-                ((MapTextureAccessor)txt).getNativeImage().getImage().writeTo(screenshot);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        //});
+        try {
+            ((MapTextureAccessor)txt).getNativeImage().getImage().writeTo(screenshot);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void lockShulkerCheck(){
@@ -200,7 +197,6 @@ public class MapartShulker {
                 return;
             }
         }
-        //findNotLocked(client);
     }
 
     public static void findNotLocked(){
@@ -264,7 +260,6 @@ public class MapartShulker {
             if(inventory.getStack(i+9).getItem().getClass() != FilledMapItem.class){
                 continue;
             }
-            moveOne(i+10, 1);
             boolean found = false;
             for(int k = 0; k < 9; k++){
                 if(inventory.getStack(k).getItem().getClass() == EmptyMapItem.class){
@@ -274,9 +269,11 @@ public class MapartShulker {
                 }
             }
             if(!found){
-                StalpoMapartHelper.LOGCHAT("Ran out of empty maps");
+                StalpoMapartHelper.LOGCHAT("Ran out of empty maps! Turning off auto copier...");
+                StalpoMapartHelper.mapCopierToggled = false;
                 return;
             }
+            moveOne(i+10, 1);
             sh.onContentChanged(inventory);
             swap(0, i+10);
         }
@@ -290,7 +287,6 @@ public class MapartShulker {
             if(inventory.getStack(i+9).getItem().getClass() != FilledMapItem.class){
                 continue;
             }
-            moveOne(i+3, 0);
             boolean found = false;
             for(int k = 0; k < 9; k++){
                 if(inventory.getStack(k).getItem() == Items.GLASS_PANE){
@@ -300,9 +296,11 @@ public class MapartShulker {
                 }
             }
             if(!found){
-                StalpoMapartHelper.LOGCHAT("Ran out of glass panes");
+                StalpoMapartHelper.LOGCHAT("Ran out of glass panes! Turning off auto locker...");
+                StalpoMapartHelper.mapLockerToggled = false;
                 return;
             }
+            moveOne(i+3, 0);
             sh.onContentChanged(inventory);
             swap(2, i+3);
         }
@@ -317,7 +315,8 @@ public class MapartShulker {
                 continue;
             }
             if(MinecraftClient.getInstance().player.experienceLevel == 0){
-                StalpoMapartHelper.LOGCHAT("Ran out of xp");
+                StalpoMapartHelper.LOGCHAT("Ran out of xp! turning off auto namer...");
+                StalpoMapartHelper.mapNamerToggled = false;
                 return;
             }
             moveOne(i+3, 0);
@@ -345,21 +344,16 @@ public class MapartShulker {
     public static void nameSMIMaps(){
         StalpoMapartHelper.LOGCHAT("Naming shulk");
 
-        try {
-            TimeUnit.MILLISECONDS.sleep(100);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
         Inventory inventory = MinecraftClient.getInstance().player.getInventory();
         for(int i = 0; i < 27; i++){
             if(inventory.getStack(i+9).getItem().getClass() != FilledMapItem.class){
                 continue;
             }
 
-            mapId = FilledMapItem.getMapId(inventory.getStack(i+9));
+            String smi = "";
+
+            mapId = FilledMapItem.getMapId(inventory.getStack(i + 9));
             mapState = FilledMapItem.getMapState(mapId, MinecraftClient.getInstance().world);
-            ((FakeMapRenderer)MinecraftClient.getInstance().currentScreen).stalpomaparthelper$renderMap(mapId, mapState);
             downloadMap("maparts_dump", "map"+i+".png");
 
             File f1 = new File(new File(MinecraftClient.getInstance().runDirectory, "maparts_dump"), getFileName(i));
@@ -372,22 +366,25 @@ public class MapartShulker {
                 }
             }
             if(name == null){
-                StalpoMapartHelper.CHAT("Slot: " + i + " MapId: " + mapId + " SMI: not in database");
-                continue;
+                smi = "none";
+            }else{
+                smi = name.substring(0, name.length() - 4);
             }
 
-            String n = inventory.getStack(i+9).getItem().getName().toString();
+            String n = inventory.getStack(i+9).getName().getString();
             if (n.equals("Map")){
                 n = "";
             }
 
             if(MinecraftClient.getInstance().player.experienceLevel == 0){
-                StalpoMapartHelper.LOGCHAT("Ran out of xp");
+                StalpoMapartHelper.LOGCHAT("Ran out of xp! turning off auto namer...");
+                StalpoMapartHelper.mapNamerToggled = false;
                 return;
             }
+
             moveOne(i+3, 0);
 
-            ((AnvilScreen)MinecraftClient.getInstance().currentScreen).onRenamed(n + name.substring(0, name.length() - 4));
+            ((AnvilScreen)MinecraftClient.getInstance().currentScreen).onRenamed(n + " " + smi);
 
             swap(2, i+3);
         }
@@ -413,13 +410,13 @@ public class MapartShulker {
 
     public static void setNextMap(){
         File checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts");
-        int i = 0;
+        int i = 1;
         while(new File(checkdir, getFileName(i)).isFile()){
             i++;
         }
         nextMap = i;
         checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts_smi");
-        i = 0;
+        i = 1;
         while(new File(checkdir, getSMIFileName(i)).isFile()){
             i++;
         }
@@ -432,7 +429,7 @@ public class MapartShulker {
     }
 
     private static String getSMIFileName(int i){
-        return ("SMI_"+i+"_s"+(i / 27)+"s"+(i % 27)+".png");
+        return ("SMI_"+i+"_"+(((i - 1) / 27) + 1)+"_"+(((i - 1) % 27) + 1)+".png");
     }
 
     private static int getNextMap(){
@@ -442,7 +439,6 @@ public class MapartShulker {
             i++;
         }
         return i;
-
     }
 
     private static int getNextSMIMap(){

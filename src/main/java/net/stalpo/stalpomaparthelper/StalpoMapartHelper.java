@@ -11,7 +11,12 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 import org.lwjgl.glfw.GLFW;
 
+import java.io.File;
+
+import static net.stalpo.stalpomaparthelper.ClearDownloadedMapsCommand.registerClearDownloadedMaps;
+import static net.stalpo.stalpomaparthelper.ClearDownloadedSMIsCommand.registerClearDownloadedSMIs;
 import static net.stalpo.stalpomaparthelper.NameMapCommand.registerNameMap;
+import static net.stalpo.stalpomaparthelper.SetMaxWrongPixelsCommand.registerSetMaxWrongPixels;
 
 public class StalpoMapartHelper implements ClientModInitializer {
 	public static final String MOD_ID = "stalpomaparthelper";
@@ -48,12 +53,24 @@ public class StalpoMapartHelper implements ClientModInitializer {
 
 		MapartShulker.setNextMap();
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerNameMap(dispatcher));
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerClearDownloadedMaps(dispatcher));
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerClearDownloadedSMIs(dispatcher));
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerSetMaxWrongPixels(dispatcher));
+
+		for(String s : new String[]{"maparts", "maparts_dump", "maparts_smi"}){
+			File screensDir = new File(MinecraftClient.getInstance().runDirectory, s);
+			if(!screensDir.exists() && !screensDir.mkdir()) {
+				StalpoMapartHelper.ERROR("Could not create directory " + screensDir.getAbsolutePath() + " cannot continue!");
+				return;
+			}
+		}
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (keyToggleMapCopier.wasPressed()) {
 				mapCopierToggled = !mapCopierToggled;
 				if(mapCopierToggled){
 					LOGCHAT("Map copier enabled!");
+					disableOtherToggles(1);
 				}else{
 					LOGCHAT("Map copier disabled!");
 				}
@@ -71,6 +88,7 @@ public class StalpoMapartHelper implements ClientModInitializer {
 				mapLockerToggled = !mapLockerToggled;
 				if(mapLockerToggled){
 					LOGCHAT("Map locker enabled!");
+					disableOtherToggles(2);
 				}else{
 					LOGCHAT("Map locker disabled!");
 				}
@@ -79,6 +97,7 @@ public class StalpoMapartHelper implements ClientModInitializer {
 				mapNamerToggled = !mapNamerToggled;
 				if(mapNamerToggled){
 					LOGCHAT("Map namer enabled!");
+					disableOtherToggles(3);
 				}else{
 					LOGCHAT("Map namer disabled!");
 				}
@@ -92,6 +111,41 @@ public class StalpoMapartHelper implements ClientModInitializer {
 				}
 			}
 		});
+	}
+
+	private void disableOtherToggles(int t){
+		switch(t){
+			case 1:
+				if(mapLockerToggled){
+					mapLockerToggled = false;
+					LOGCHAT("Map locker disabled!");
+				}
+				if(mapNamerToggled){
+					mapNamerToggled = false;
+					LOGCHAT("Map namer disabled!");
+				}
+				break;
+			case 2:
+				if(mapCopierToggled){
+					mapCopierToggled = false;
+					LOGCHAT("Map copier disabled!");
+				}
+				if(mapNamerToggled){
+					mapNamerToggled = false;
+					LOGCHAT("Map namer disabled!");
+				}
+				break;
+			case 3:
+				if(mapCopierToggled){
+					mapCopierToggled = false;
+					LOGCHAT("Map copier disabled!");
+				}
+				if(mapLockerToggled){
+					mapLockerToggled = false;
+					LOGCHAT("Map locker disabled!");
+				}
+				break;
+		}
 	}
 
 	private KeyBinding registerKey(String key, int code) {

@@ -59,7 +59,7 @@ public abstract class HandledScreenMixin extends Screen implements SlotClicker, 
             matrixStack.push();
             matrixStack.pop();
 
-            // Map
+            // Map (can you tell this part is skidded yet?)
             matrixStack.push();
             matrixStack.translate(3.2F, 3.2F, 401);
             matrixStack.scale(0.45F, 0.45F, 1);
@@ -70,7 +70,9 @@ public abstract class HandledScreenMixin extends Screen implements SlotClicker, 
                 }
             }, id, state, true, 15728880);
             matrixStack.pop();
-        } finally { }
+        } catch (Exception e){
+            // doesn't need to actually work lmao just get into draw part
+        }
     }
 
     @Override
