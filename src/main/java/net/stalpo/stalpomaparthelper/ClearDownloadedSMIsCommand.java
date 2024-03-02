@@ -23,6 +23,8 @@ public final class ClearDownloadedSMIsCommand {
         }
         MapartShulker.setNextMap();
 
+        ImageHelper.clearImages(true);
+
         StalpoMapartHelper.CHAT("Cleared downloaded SMIs");
         return Command.SINGLE_SUCCESS;
     }

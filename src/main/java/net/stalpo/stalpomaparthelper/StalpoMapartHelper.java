@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
+import net.minecraft.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -64,6 +65,9 @@ public class StalpoMapartHelper implements ClientModInitializer {
 				return;
 			}
 		}
+
+		Util.getIoWorkerExecutor().execute(ImageHelper::initializeImages);
+		Util.getIoWorkerExecutor().execute(ImageHelper::initializeImagesSMI);
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (keyToggleMapCopier.wasPressed()) {
