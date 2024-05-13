@@ -16,7 +16,7 @@ public final class ClearDownloadedSMIsCommand {
                 .executes(ctx -> ClearDownloadedSMIs()));
     }
 
-    public static int ClearDownloadedSMIs() {
+    private static int ClearDownloadedSMIs() {
         File checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts_smi");
         for(File f : checkdir.listFiles()){
             f.delete();

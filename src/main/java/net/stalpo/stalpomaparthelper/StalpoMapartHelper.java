@@ -16,6 +16,8 @@ import java.io.File;
 
 import static net.stalpo.stalpomaparthelper.ClearDownloadedMapsCommand.registerClearDownloadedMaps;
 import static net.stalpo.stalpomaparthelper.ClearDownloadedSMIsCommand.registerClearDownloadedSMIs;
+import static net.stalpo.stalpomaparthelper.DownloadWorldMapsCommand.registerDownloadWorldMaps;
+import static net.stalpo.stalpomaparthelper.FindNewMapsCommand.registerFindNewMaps;
 import static net.stalpo.stalpomaparthelper.NameMapCommand.registerNameMap;
 import static net.stalpo.stalpomaparthelper.SetMaxWrongPixelsCommand.registerSetMaxWrongPixels;
 
@@ -38,6 +40,8 @@ public class StalpoMapartHelper implements ClientModInitializer {
 	public static KeyBinding keyToggleMapNamer;
 	public static boolean mapNamerToggled;
 
+	public static File modFolder;
+
 	@Override
 	public void onInitializeClient() {
 		LOG(MOD_ID+": Hello World!");
@@ -57,9 +61,17 @@ public class StalpoMapartHelper implements ClientModInitializer {
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerClearDownloadedMaps(dispatcher));
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerClearDownloadedSMIs(dispatcher));
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerSetMaxWrongPixels(dispatcher));
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerDownloadWorldMaps(dispatcher));
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerFindNewMaps(dispatcher));
+
+		modFolder = new File(MinecraftClient.getInstance().runDirectory, "stalpomaparthelper");
+		if(!modFolder.exists() && !modFolder.mkdir()) {
+			StalpoMapartHelper.ERROR("Could not create directory " + modFolder.getAbsolutePath() + " cannot continue!");
+			return;
+		}
 
 		for(String s : new String[]{"maparts", "maparts_dump", "maparts_smi"}){
-			File screensDir = new File(MinecraftClient.getInstance().runDirectory, s);
+			File screensDir = new File(modFolder, s);
 			if(!screensDir.exists() && !screensDir.mkdir()) {
 				StalpoMapartHelper.ERROR("Could not create directory " + screensDir.getAbsolutePath() + " cannot continue!");
 				return;

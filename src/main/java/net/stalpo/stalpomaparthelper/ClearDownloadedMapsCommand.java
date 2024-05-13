@@ -16,7 +16,7 @@ public final class ClearDownloadedMapsCommand {
                 .executes(ctx -> ClearDownlaodedMaps()));
     }
 
-    public static int ClearDownlaodedMaps() {
+    private static int ClearDownlaodedMaps() {
         File checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts");
         for(File f : checkdir.listFiles()){
             f.delete();

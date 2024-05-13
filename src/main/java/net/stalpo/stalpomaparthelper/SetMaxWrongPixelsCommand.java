@@ -17,7 +17,7 @@ public final class SetMaxWrongPixelsCommand {
                         .executes(ctx -> SetMaxWrongPixels(getInteger(ctx, "max")))));
     }
 
-    public static int SetMaxWrongPixels(int maxWrong) {
+    private static int SetMaxWrongPixels(int maxWrong) {
         ImageHelper.maxWrong = maxWrong;
 
         StalpoMapartHelper.CHAT("Set max wrong pixels for duplicate checker and smi lookup to: " + maxWrong);

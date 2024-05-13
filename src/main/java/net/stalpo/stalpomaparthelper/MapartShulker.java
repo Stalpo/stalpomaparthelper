@@ -6,18 +6,16 @@ import net.minecraft.item.Items;
 import net.stalpo.stalpomaparthelper.interfaces.InventoryExporter;
 import net.stalpo.stalpomaparthelper.interfaces.FakeMapRenderer;
 import net.stalpo.stalpomaparthelper.interfaces.SlotClicker;
-import net.stalpo.stalpomaparthelper.mixin.MapRendererInvoker;
-import net.stalpo.stalpomaparthelper.mixin.MapTextureAccessor;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.map.MapState;
-import net.minecraft.client.render.MapRenderer;
+
+import java.util.concurrent.TimeUnit;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +23,7 @@ public class MapartShulker {
     public static ScreenHandler sh;
     private static MapState mapState;
     private static int mapId;
-    private static int nextMap;
+    public static int nextMap;
     private static int nextSMIMap;
 
     private static List<MapState> states;
@@ -63,6 +61,8 @@ public class MapartShulker {
             StalpoMapartHelper.LOGCHAT("Downloading shulker");
             Inventory inventory = ((InventoryExporter)sh).getInventory();
 
+            setNextMap();
+
             ((FakeMapRenderer)MinecraftClient.getInstance().currentScreen).stalpomaparthelper$renderMaps(getIds(), getStates());
 
             for(int i = 0; i < inventory.size(); i++){
@@ -73,11 +73,13 @@ public class MapartShulker {
                 mapId = FilledMapItem.getMapId(inventory.getStack(i));
                 mapState = FilledMapItem.getMapState(mapId, MinecraftClient.getInstance().world);
                 if(StalpoMapartHelper.SMIDownloadModeToggled){
-                    downloadMap("maparts_smi", getSMIFileName(nextSMIMap));
-                    nextSMIMap = getNextSMIMap();
+                    if(MapHelper.downloadMap("maparts_smi", getSMIFileName(nextSMIMap), mapId, mapState)){
+                        nextSMIMap = getNextSMIMap();
+                    }
                 }else{
-                    downloadMap("maparts", getFileName(nextMap));
-                    nextMap = getNextMap();
+                    if(MapHelper.downloadMap("maparts", getFileName(nextMap), mapId, mapState)){
+                        nextMap = getNextMap();
+                    }
                 }
             }
             StalpoMapartHelper.LOGCHAT("Finished downloading shulker");
@@ -95,7 +97,7 @@ public class MapartShulker {
 
             List<Integer> duplicates = new ArrayList<Integer>();
 
-            File dump = new File(MinecraftClient.getInstance().runDirectory, "maparts_dump");
+            File dump = new File(StalpoMapartHelper.modFolder, "maparts_dump");
             for(File f : dump.listFiles()){
                 f.delete();
             }
@@ -107,16 +109,18 @@ public class MapartShulker {
 
                 mapId = FilledMapItem.getMapId(inventory.getStack(i));
                 mapState = FilledMapItem.getMapState(mapId, MinecraftClient.getInstance().world);
-                downloadMap("maparts_dump", "map"+i+".png");
+                if(!MapHelper.downloadMap("maparts_dump", "map"+i+".png", mapId, mapState)){
+                    continue;
+                }
 
-                File f1 = new File(new File(MinecraftClient.getInstance().runDirectory, "maparts_dump"), getFileName(i));
+                File f1 = new File(new File(StalpoMapartHelper.modFolder, "maparts_dump"), getFileName(i));
 
                 if(ImageHelper.isDuplicate(f1)){
                     StalpoMapartHelper.LOGCHAT("Duplicate found! (in downloads)");
                     duplicates.add((Integer)i);
                 }
 
-                File checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts_dump");
+                File checkdir = new File(StalpoMapartHelper.modFolder, "maparts_dump");
                 for(File f2 : checkdir.listFiles()){
                     if(!f2.getPath().equals(f1.getPath())){
                         if(ImageHelper.sameImage(f1, f2)){
@@ -150,9 +154,11 @@ public class MapartShulker {
 
                 mapId = FilledMapItem.getMapId(inventory.getStack(i));
                 mapState = FilledMapItem.getMapState(mapId, MinecraftClient.getInstance().world);
-                downloadMap("maparts_dump", "map"+i+".png");
+                if(!MapHelper.downloadMap("maparts_dump", "map"+i+".png", mapId, mapState)){
+                    continue;
+                }
 
-                File f = new File(new File(MinecraftClient.getInstance().runDirectory, "maparts_dump"), getFileName(i));
+                File f = new File(new File(StalpoMapartHelper.modFolder, "maparts_dump"), getFileName(i));
                 String name = ImageHelper.getSMI(f);
 
                 if(name == null){
@@ -162,32 +168,6 @@ public class MapartShulker {
                 }
             }
             StalpoMapartHelper.LOGCHAT("Finished getting SMIs");
-        }
-    }
-
-    private static void downloadMap(String DirName, String FileName){
-
-        MapRenderer.MapTexture txt = ((MapRendererInvoker)MinecraftClient.getInstance().gameRenderer.getMapRenderer()).invokeGetMapTexture(mapId, mapState);
-
-        File screensDir = new File(MinecraftClient.getInstance().runDirectory, DirName);
-        if(!screensDir.exists() && !screensDir.mkdir()) {
-            StalpoMapartHelper.ERROR("Could not create directory " + screensDir.getAbsolutePath() + " cannot continue!");
-            return;
-        }
-
-        File map = new File(screensDir, FileName);
-
-        try {
-            ((MapTextureAccessor)txt).getNativeImage().getImage().writeTo(map);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        if(screensDir.equals("maparts_smi")){
-            ImageHelper.addImage(true, map);
-        }else if(screensDir.equals("maparts")){
-            ImageHelper.addImage(false, map);
         }
     }
 
@@ -359,9 +339,11 @@ public class MapartShulker {
 
             mapId = FilledMapItem.getMapId(inventory.getStack(i + 9));
             mapState = FilledMapItem.getMapState(mapId, MinecraftClient.getInstance().world);
-            downloadMap("maparts_dump", "map"+i+".png");
+            if(!MapHelper.downloadMap("maparts_dump", "map"+i+".png", mapId, mapState)){
+                continue;
+            }
 
-            File f = new File(new File(MinecraftClient.getInstance().runDirectory, "maparts_dump"), getFileName(i));
+            File f = new File(new File(StalpoMapartHelper.modFolder, "maparts_dump"), getFileName(i));
             String name = ImageHelper.getSMI(f);
 
             if(name == null){
@@ -391,6 +373,11 @@ public class MapartShulker {
     }
 
     private static void moveOne(int from, int to){
+        try {
+            TimeUnit.MILLISECONDS.sleep(150);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
         ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, to, 1, SlotActionType.PICKUP);
         ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
@@ -402,19 +389,24 @@ public class MapartShulker {
     }
 
     private static void swap(int from, int to){
+        try {
+            TimeUnit.MILLISECONDS.sleep(150);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
         ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, to, 0, SlotActionType.PICKUP);
         ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
     }
 
     public static void setNextMap(){
-        File checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts");
+        File checkdir = new File(StalpoMapartHelper.modFolder, "maparts");
         int i = 1;
         while(new File(checkdir, getFileName(i)).isFile()){
             i++;
         }
         nextMap = i;
-        checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts_smi");
+        checkdir = new File(StalpoMapartHelper.modFolder, "maparts_smi");
         i = 1;
         while(new File(checkdir, getSMIFileName(i)).isFile()){
             i++;
@@ -423,7 +415,7 @@ public class MapartShulker {
         StalpoMapartHelper.LOG("nextMap: " + nextMap + " nextSMIMap: " + nextSMIMap);
     }
 
-    private static String getFileName(int i){
+    public static String getFileName(int i){
         return ("map"+i+".png");
     }
 
@@ -431,8 +423,8 @@ public class MapartShulker {
         return ("SMI_"+i+"_"+(((i - 1) / 27) + 1)+"_"+(((i - 1) % 27) + 1)+".png");
     }
 
-    private static int getNextMap(){
-        File checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts");
+    public static int getNextMap(){
+        File checkdir = new File(StalpoMapartHelper.modFolder, "maparts");
         int i = nextMap + 1;
         while(new File(checkdir, getFileName(i)).isFile()){
             i++;
@@ -441,7 +433,7 @@ public class MapartShulker {
     }
 
     private static int getNextSMIMap(){
-        File checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts_smi");
+        File checkdir = new File(StalpoMapartHelper.modFolder, "maparts_smi");
         int i = nextSMIMap + 1;
         while(new File(checkdir, getSMIFileName(i)).isFile()){
             i++;
