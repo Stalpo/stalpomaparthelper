@@ -45,11 +45,11 @@ public class StalpoMapartHelper implements ClientModInitializer {
 		keyDownloadMaps = registerKey("Download Maps", GLFW.GLFW_KEY_KP_1);
 		keyFindDuplicates = registerKey("Find Duplicates", GLFW.GLFW_KEY_KP_2);
 		//keyFindNotLocked = registerKey("Find Not Locked", GLFW.GLFW_KEY_KP_3);
-		keyGetSMI = registerKey("Get SMI", GLFW.GLFW_KEY_KP_4);
+		//keyGetSMI = registerKey("Get SMI", GLFW.GLFW_KEY_KP_4);
 		//keyToggleMapCopier = registerKey("Toggle Map Copier", GLFW.GLFW_KEY_KP_5);
 		//keyToggleMapLocker = registerKey("Toggle Map Locker", GLFW.GLFW_KEY_KP_6);
 		//keyToggleMapNamer = registerKey("Toggle Map Namer", GLFW.GLFW_KEY_KP_7);
-		keyToggleSMIDownloadMode = registerKey("Toggle SMI Download Mode", GLFW.GLFW_KEY_KP_8);
+		//keyToggleSMIDownloadMode = registerKey("Toggle SMI Download Mode", GLFW.GLFW_KEY_KP_8);
 		//keyToggleSMINamerMode = registerKey("Toggle SMI Namer Mode", GLFW.GLFW_KEY_KP_9);
 
 		MapartShulker.setNextMap();
@@ -70,7 +70,7 @@ public class StalpoMapartHelper implements ClientModInitializer {
 		Util.getIoWorkerExecutor().execute(ImageHelper::initializeImagesSMI);
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
-			while (keyToggleMapCopier.wasPressed()) {
+			/*while (keyToggleMapCopier.wasPressed()) {
 				mapCopierToggled = !mapCopierToggled;
 				if(mapCopierToggled){
 					LOGCHAT("Map copier enabled!");
@@ -113,7 +113,7 @@ public class StalpoMapartHelper implements ClientModInitializer {
 				}else{
 					LOGCHAT("SMI map namer mode disabled!");
 				}
-			}
+			}*/
 		});
 	}
 
