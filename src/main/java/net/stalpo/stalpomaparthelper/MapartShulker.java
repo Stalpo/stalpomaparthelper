@@ -112,7 +112,7 @@ public class MapartShulker {
                 File f1 = new File(new File(MinecraftClient.getInstance().runDirectory, "maparts_dump"), getFileName(i));
 
                 if(ImageHelper.isDuplicate(f1)){
-                    StalpoMapartHelper.LOGCHAT("Duplicate found! (in downloads)");
+                    StalpoMapartHelper.LOGCHAT("Duplicate found! (in downloads) slot " + i);
                     duplicates.add((Integer)i);
                 }
 
@@ -120,7 +120,7 @@ public class MapartShulker {
                 for(File f2 : checkdir.listFiles()){
                     if(!f2.getPath().equals(f1.getPath())){
                         if(ImageHelper.sameImage(f1, f2)){
-                            StalpoMapartHelper.LOGCHAT("Duplicate found! (in this shulk)");
+                            StalpoMapartHelper.LOGCHAT("Duplicate found! (in this shulk) slot " + i);
                             duplicates.add((Integer)i);
                             break;
                         }
@@ -128,7 +128,7 @@ public class MapartShulker {
                 }
             }
             for(Integer i : duplicates){
-                swap(i, i+27);
+                //swap(i, i+27);
             }
             StalpoMapartHelper.LOGCHAT("Finished finding duplicates");
         }
