@@ -167,7 +167,12 @@ public class MapartShulker {
 
     private static void downloadMap(String DirName, String FileName){
 
-        MapRenderer.MapTexture txt = ((MapRendererInvoker)MinecraftClient.getInstance().gameRenderer.getMapRenderer()).invokeGetMapTexture(mapId, mapState);
+        MapRenderer.MapTexture txt = null;
+        try{
+            txt = ((MapRendererInvoker)MinecraftClient.getInstance().gameRenderer.getMapRenderer()).invokeGetMapTexture(mapId, mapState);
+        }catch(Exception e){
+            StalpoMapartHelper.LOGCHAT("Maps not loaded! take all of the maps out of the shulker then put them all back in to load them.");
+        }
 
         File screensDir = new File(MinecraftClient.getInstance().runDirectory, DirName);
         if(!screensDir.exists() && !screensDir.mkdir()) {

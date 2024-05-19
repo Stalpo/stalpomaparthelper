@@ -36,11 +36,11 @@ public abstract class HandledScreenMixin extends Screen implements SlotClicker, 
             Util.getIoWorkerExecutor().execute(MapartShulker::downloadShulker);
         }else if(StalpoMapartHelper.keyFindDuplicates.matchesKey(keyCode, scanCode)){
             Util.getIoWorkerExecutor().execute(MapartShulker::findDuplicates);
-        }else if(StalpoMapartHelper.keyGetSMI.matchesKey(keyCode, scanCode)){
-            Util.getIoWorkerExecutor().execute(MapartShulker::getSMI);
-        }else if(StalpoMapartHelper.keyFindNotLocked.matchesKey(keyCode, scanCode)){
-            Util.getIoWorkerExecutor().execute(MapartShulker::findNotLocked);
-        }
+        }//else if(StalpoMapartHelper.keyGetSMI.matchesKey(keyCode, scanCode)){
+        //    Util.getIoWorkerExecutor().execute(MapartShulker::getSMI);
+        //}else if(StalpoMapartHelper.keyFindNotLocked.matchesKey(keyCode, scanCode)){
+        //    Util.getIoWorkerExecutor().execute(MapartShulker::findNotLocked);
+        //}
     }
 
     @Override
