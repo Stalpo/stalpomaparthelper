@@ -5,6 +5,7 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.map.MapState;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
@@ -43,7 +44,7 @@ public abstract class HandledScreenMixin extends Screen implements SlotClicker, 
         }
     }
 
-    @Override
+    /*@Override
     public void stalpomaparthelper$renderMaps(List<Integer> ids, List<MapState> states){
         for(int i = 0; i < ids.size(); i++){
             stalpomaparthelper$renderMap(ids.get(i), states.get(i));
@@ -73,7 +74,7 @@ public abstract class HandledScreenMixin extends Screen implements SlotClicker, 
         } catch (Exception e){
             // doesn't need to actually work lmao just get into draw part
         }
-    }
+    }*/
 
     @Override
     public void StalpoMapartHelper$onMouseClick(Slot slot, int invSlot, int button, SlotActionType slotActionType){

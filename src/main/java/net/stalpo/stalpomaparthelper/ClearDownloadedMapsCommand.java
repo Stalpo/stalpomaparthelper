@@ -17,7 +17,7 @@ public final class ClearDownloadedMapsCommand {
     }
 
     public static int ClearDownlaodedMaps() {
-        File checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts");
+        File checkdir = new File(StalpoMapartHelper.modFolder, "maparts");
         for(File f : checkdir.listFiles()){
             f.delete();
         }

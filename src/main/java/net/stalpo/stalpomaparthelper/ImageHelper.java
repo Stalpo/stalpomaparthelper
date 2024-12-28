@@ -73,7 +73,7 @@ public class ImageHelper {
 
     public static void initializeImages(){
         clearImages(false);
-        File checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts");
+        File checkdir = new File(StalpoMapartHelper.modFolder, "maparts");
         for(File f : checkdir.listFiles()){
             images.add(new ImageData(f.getName(), returnPixelVal(f)));
         }
@@ -81,7 +81,7 @@ public class ImageHelper {
 
     public static void initializeImagesSMI(){
         clearImages(true);
-        File checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts_smi");
+        File checkdir = new File(StalpoMapartHelper.modFolder, "maparts_smi");
         for(File f : checkdir.listFiles()){
             imagesSMI.add(new ImageData(f.getName().substring(0, f.getName().length() - 4), returnPixelVal(f)));
         }

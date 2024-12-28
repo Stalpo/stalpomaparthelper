@@ -1,6 +1,12 @@
 package net.stalpo.stalpomaparthelper;
 
 import net.minecraft.client.gui.screen.ingame.AnvilScreen;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.EmptyMapItem;
 import net.minecraft.item.Items;
 import net.stalpo.stalpomaparthelper.interfaces.InventoryExporter;
@@ -25,6 +31,7 @@ public class MapartShulker {
     public static ScreenHandler sh;
     private static MapState mapState;
     private static int mapId;
+    private static MapIdComponent mapIdComponent;
     private static int nextMap;
     private static int nextSMIMap;
 
@@ -36,9 +43,9 @@ public class MapartShulker {
     public static int currX = 0;
     public static int currY = 0;
 
-    public static List<Integer> getIds(){
+    public static List<MapIdComponent> getIds(){
         Inventory inventory = ((InventoryExporter)sh).getInventory();
-        List<Integer> ids = new ArrayList<Integer>();;
+        List<MapIdComponent> ids = new ArrayList<MapIdComponent>();;
         states = new ArrayList<MapState>();
 
         for(int i = 0; i < inventory.size(); i++){
@@ -46,9 +53,10 @@ public class MapartShulker {
                 continue;
             }
 
-            mapId = FilledMapItem.getMapId(inventory.getStack(i));
-            ids.add(mapId);
-            states.add(FilledMapItem.getMapState(mapId, MinecraftClient.getInstance().world));
+            mapIdComponent = (MapIdComponent)inventory.getStack(i).get(DataComponentTypes.MAP_ID);
+            mapId = mapIdComponent.id();
+            ids.add(mapIdComponent);
+            states.add(FilledMapItem.getMapState(inventory.getStack(i), MinecraftClient.getInstance().world));
         }
 
         return ids;
@@ -63,15 +71,16 @@ public class MapartShulker {
             StalpoMapartHelper.LOGCHAT("Downloading shulker");
             Inventory inventory = ((InventoryExporter)sh).getInventory();
 
-            ((FakeMapRenderer)MinecraftClient.getInstance().currentScreen).stalpomaparthelper$renderMaps(getIds(), getStates());
+            renderMaps(getIds(), getStates());
 
             for(int i = 0; i < inventory.size(); i++){
                 if(inventory.getStack(i).getItem().getClass() != FilledMapItem.class){
                     continue;
                 }
 
-                mapId = FilledMapItem.getMapId(inventory.getStack(i));
-                mapState = FilledMapItem.getMapState(mapId, MinecraftClient.getInstance().world);
+                mapIdComponent = (MapIdComponent)inventory.getStack(i).get(DataComponentTypes.MAP_ID);
+                mapId = mapIdComponent.id();
+                mapState = FilledMapItem.getMapState(inventory.getStack(i), MinecraftClient.getInstance().world);
                 if(StalpoMapartHelper.SMIDownloadModeToggled){
                     downloadMap("maparts_smi", getSMIFileName(nextSMIMap));
                     nextSMIMap = getNextSMIMap();
@@ -89,13 +98,13 @@ public class MapartShulker {
             StalpoMapartHelper.LOGCHAT("Finding duplicates");
             Inventory inventory = ((InventoryExporter)sh).getInventory();
 
-            ((FakeMapRenderer)MinecraftClient.getInstance().currentScreen).stalpomaparthelper$renderMaps(getIds(), getStates());
+            renderMaps(getIds(), getStates());
 
             ImageHelper.initializeImages();
 
             List<Integer> duplicates = new ArrayList<Integer>();
 
-            File dump = new File(MinecraftClient.getInstance().runDirectory, "maparts_dump");
+            File dump = new File(StalpoMapartHelper.modFolder, "maparts_dump");
             for(File f : dump.listFiles()){
                 f.delete();
             }
@@ -105,18 +114,19 @@ public class MapartShulker {
                     continue;
                 }
 
-                mapId = FilledMapItem.getMapId(inventory.getStack(i));
-                mapState = FilledMapItem.getMapState(mapId, MinecraftClient.getInstance().world);
+                mapIdComponent = (MapIdComponent)inventory.getStack(i).get(DataComponentTypes.MAP_ID);
+                mapId = mapIdComponent.id();
+                mapState = FilledMapItem.getMapState(inventory.getStack(i), MinecraftClient.getInstance().world);
                 downloadMap("maparts_dump", "map"+i+".png");
 
-                File f1 = new File(new File(MinecraftClient.getInstance().runDirectory, "maparts_dump"), getFileName(i));
+                File f1 = new File(new File(StalpoMapartHelper.modFolder, "maparts_dump"), getFileName(i));
 
                 if(ImageHelper.isDuplicate(f1)){
                     StalpoMapartHelper.LOGCHAT("Duplicate found! (in downloads)");
                     duplicates.add((Integer)i);
                 }
 
-                File checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts_dump");
+                File checkdir = new File(StalpoMapartHelper.modFolder, "maparts_dump");
                 for(File f2 : checkdir.listFiles()){
                     if(!f2.getPath().equals(f1.getPath())){
                         if(ImageHelper.sameImage(f1, f2)){
@@ -139,7 +149,7 @@ public class MapartShulker {
             StalpoMapartHelper.LOGCHAT("Getting SMIs");
             Inventory inventory = ((InventoryExporter)sh).getInventory();
 
-            ((FakeMapRenderer)MinecraftClient.getInstance().currentScreen).stalpomaparthelper$renderMaps(getIds(), getStates());
+            renderMaps(getIds(), getStates());
 
             ImageHelper.initializeImagesSMI();
 
@@ -148,11 +158,12 @@ public class MapartShulker {
                     continue;
                 }
 
-                mapId = FilledMapItem.getMapId(inventory.getStack(i));
-                mapState = FilledMapItem.getMapState(mapId, MinecraftClient.getInstance().world);
+                mapIdComponent = (MapIdComponent)inventory.getStack(i).get(DataComponentTypes.MAP_ID);
+                mapId = mapIdComponent.id();
+                mapState = FilledMapItem.getMapState(inventory.getStack(i), MinecraftClient.getInstance().world);
                 downloadMap("maparts_dump", "map"+i+".png");
 
-                File f = new File(new File(MinecraftClient.getInstance().runDirectory, "maparts_dump"), getFileName(i));
+                File f = new File(new File(StalpoMapartHelper.modFolder, "maparts_dump"), getFileName(i));
                 String name = ImageHelper.getSMI(f);
 
                 if(name == null){
@@ -165,14 +176,14 @@ public class MapartShulker {
         }
     }
 
-    private static void downloadMap(String DirName, String FileName){
+    private static boolean downloadMap(String DirName, String FileName){
 
-        MapRenderer.MapTexture txt = ((MapRendererInvoker)MinecraftClient.getInstance().gameRenderer.getMapRenderer()).invokeGetMapTexture(mapId, mapState);
+        MapRenderer.MapTexture txt = ((MapRendererInvoker)MinecraftClient.getInstance().gameRenderer.getMapRenderer()).invokeGetMapTexture(mapIdComponent, mapState);
 
-        File screensDir = new File(MinecraftClient.getInstance().runDirectory, DirName);
+        File screensDir = new File(StalpoMapartHelper.modFolder, DirName);
         if(!screensDir.exists() && !screensDir.mkdir()) {
             StalpoMapartHelper.ERROR("Could not create directory " + screensDir.getAbsolutePath() + " cannot continue!");
-            return;
+            return false;
         }
 
         File map = new File(screensDir, FileName);
@@ -181,7 +192,7 @@ public class MapartShulker {
             ((MapTextureAccessor)txt).getNativeImage().getImage().writeTo(map);
         } catch (IOException e) {
             e.printStackTrace();
-            return;
+            return false;
         }
 
         if(screensDir.equals("maparts_smi")){
@@ -189,6 +200,8 @@ public class MapartShulker {
         }else if(screensDir.equals("maparts")){
             ImageHelper.addImage(false, map);
         }
+
+        return true;
     }
 
     public static void lockShulkerCheck(){
@@ -207,15 +220,16 @@ public class MapartShulker {
             StalpoMapartHelper.LOGCHAT("Finding not locked");
             Inventory inventory = ((InventoryExporter) sh).getInventory();
 
-            ((FakeMapRenderer)MinecraftClient.getInstance().currentScreen).stalpomaparthelper$renderMaps(getIds(), getStates());
+            renderMaps(getIds(), getStates());
 
             for (int i = 0; i < inventory.size(); i++) {
                 if (inventory.getStack(i).getItem().getClass() != FilledMapItem.class) {
                     continue;
                 }
 
-                mapId = FilledMapItem.getMapId(inventory.getStack(i));
-                mapState = FilledMapItem.getMapState(mapId, MinecraftClient.getInstance().world);
+                mapIdComponent = (MapIdComponent)inventory.getStack(i).get(DataComponentTypes.MAP_ID);
+                mapId = mapIdComponent.id();
+                mapState = FilledMapItem.getMapState(inventory.getStack(i), MinecraftClient.getInstance().world);
 
                 if (!mapState.locked) {
                     swap(i, i+27);
@@ -357,11 +371,12 @@ public class MapartShulker {
 
             String smi = "";
 
-            mapId = FilledMapItem.getMapId(inventory.getStack(i + 9));
-            mapState = FilledMapItem.getMapState(mapId, MinecraftClient.getInstance().world);
+            mapIdComponent = (MapIdComponent)inventory.getStack(i).get(DataComponentTypes.MAP_ID);
+            mapId = mapIdComponent.id();
+            mapState = FilledMapItem.getMapState(inventory.getStack(i), MinecraftClient.getInstance().world);
             downloadMap("maparts_dump", "map"+i+".png");
 
-            File f = new File(new File(MinecraftClient.getInstance().runDirectory, "maparts_dump"), getFileName(i));
+            File f = new File(new File(StalpoMapartHelper.modFolder, "maparts_dump"), getFileName(i));
             String name = ImageHelper.getSMI(f);
 
             if(name == null){
@@ -408,13 +423,13 @@ public class MapartShulker {
     }
 
     public static void setNextMap(){
-        File checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts");
+        File checkdir = new File(StalpoMapartHelper.modFolder, "maparts");
         int i = 1;
         while(new File(checkdir, getFileName(i)).isFile()){
             i++;
         }
         nextMap = i;
-        checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts_smi");
+        checkdir = new File(StalpoMapartHelper.modFolder, "maparts_smi");
         i = 1;
         while(new File(checkdir, getSMIFileName(i)).isFile()){
             i++;
@@ -432,7 +447,7 @@ public class MapartShulker {
     }
 
     private static int getNextMap(){
-        File checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts");
+        File checkdir = new File(StalpoMapartHelper.modFolder, "maparts");
         int i = nextMap + 1;
         while(new File(checkdir, getFileName(i)).isFile()){
             i++;
@@ -441,11 +456,41 @@ public class MapartShulker {
     }
 
     private static int getNextSMIMap(){
-        File checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts_smi");
+        File checkdir = new File(StalpoMapartHelper.modFolder, "maparts_smi");
         int i = nextSMIMap + 1;
         while(new File(checkdir, getSMIFileName(i)).isFile()){
             i++;
         }
         return i;
+    }
+
+    public static void renderMaps(List<MapIdComponent> ids, List<MapState> states){
+        for(int i = 0; i < ids.size(); i++){
+            renderMap(ids.get(i), states.get(i));
+        }
+    }
+
+    public static void renderMap(MapIdComponent id, MapState state){
+        try {
+            final MatrixStack matrixStack = new MatrixStack();
+
+            // Background
+            matrixStack.push();
+            matrixStack.pop();
+
+            // Map (can you tell this part is skidded yet?)
+            matrixStack.push();
+            matrixStack.translate(3.2F, 3.2F, 401);
+            matrixStack.scale(0.45F, 0.45F, 1);
+            MinecraftClient.getInstance().gameRenderer.getMapRenderer().draw(matrixStack, new VertexConsumerProvider() {
+                @Override
+                public VertexConsumer getBuffer(RenderLayer layer) {
+                    return null;
+                }
+            }, id, state, true, 15728880);
+            matrixStack.pop();
+        } catch (Exception e){
+            // doesn't need to actually work lmao just get into draw part
+        }
     }
 }

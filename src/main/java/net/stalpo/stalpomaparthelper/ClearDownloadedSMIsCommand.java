@@ -17,7 +17,7 @@ public final class ClearDownloadedSMIsCommand {
     }
 
     public static int ClearDownloadedSMIs() {
-        File checkdir = new File(MinecraftClient.getInstance().runDirectory, "maparts_smi");
+        File checkdir = new File(StalpoMapartHelper.modFolder, "maparts_smi");
         for(File f : checkdir.listFiles()){
             f.delete();
         }
