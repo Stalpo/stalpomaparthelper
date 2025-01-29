@@ -17,12 +17,21 @@ public final class NameMapCommand {
         dispatcher.register(literal("nameMap")
                 .then(argument("x", integer())
                         .then(argument("y", integer())
-                                .then(argument("name", greedyString())
-                                        .executes(ctx -> NameMap(getString(ctx, "name"), getInteger(ctx, "x"), getInteger(ctx, "y")))))));
+                                .then(argument("delay", integer())
+                                        .then(argument("name", greedyString())
+                                                .executes(ctx -> NameMap(getString(ctx, "name"), getInteger(ctx, "x"), getInteger(ctx, "y"),
+                                                        getInteger(ctx, "delay")
+                                                )))))));
     }
 
-    public static int NameMap(String name, int x, int y) {
+    public static int NameMap(String name, int x, int y, int delay) {
+        if (!name.contains("{x}") || !name.contains("{y}")) {
+            StalpoMapartHelper.CHAT("You have to specify both §4{x}§r and §4{y}§r in the name!\nIf you're using \"§2{§r\" or \"§2}§r\" in the name, just use them as is: §2{§4{x}§r, §4{y}§4}§r");
+            return Command.SINGLE_SUCCESS;  // wha is it
+        }
+
         MapartShulker.mapName = name;
+        MapartShulker.delay = delay;
         MapartShulker.mapX = x;
         MapartShulker.mapY = y;
         MapartShulker.currX = 0;
