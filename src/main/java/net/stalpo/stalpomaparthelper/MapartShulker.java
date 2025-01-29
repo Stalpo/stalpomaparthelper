@@ -512,23 +512,19 @@ public class MapartShulker {
             // this loop ensures the server ACTUALLY processed renaming
             do {
                 if (anvilBroken) { return; }
-//                sh.onContentChanged(inventory);
 
+//                these lines fix singleplayer renaming
+//                sh.onContentChanged(inventory);
 //                mc.player.networkHandler.sendPacket(new RenameItemC2SPacket(newName));
+
                 ((AnvilScreen)MinecraftClient.getInstance().currentScreen).onRenamed(newName);
                 try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
 
                 sh.onContentChanged(inventory);
-//                inventory.updateItems();  // do NOT delete this, otherwise it lead to false slot actions
 
             } while (!Objects.equals(mc.player.currentScreenHandler.getSlot(2).getStack().getName().getString(), newName));
 
             moveStack(2, i + 3);
-
-            // do NOT delete this, otherwise it lead to false slot actions. Yes, two times
-            // it fixes 1/500 case of anvil desync on the next rename with low delay
-//            sh.onContentChanged(inventory);
-//            inventory.updateItems();
             currentExpLevel--;
         }
 
