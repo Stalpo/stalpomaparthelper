@@ -590,8 +590,11 @@ public class MapartShulker {
 
     private static void moveOne(int from, int to){
         ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
+        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
         ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, to, 1, SlotActionType.PICKUP);
+        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
         ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
+        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
     }
 
     private static void moveHalf(int from, int to){
