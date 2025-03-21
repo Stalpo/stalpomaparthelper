@@ -4,12 +4,8 @@ A client side mapart utility mod designed for 2b2t mapart enthusiasts!
 # About
 This mod was made because I am too lazy to manually copy 2000+ (probably a lot more since writing this) unique maps more than once. Some of the features include: map copier, auto locker, map downloader, and a duplicate checker.
 
-# What is SMI?
-SMI (Stalpo Mapart Index) is a system used to try and archive all maparts on 2b2t by giving them each a unique id. Sadly I suck at coding and planning so this collection will have to be manually updated. If you have any maparts that aren't indexed yet please contact me! For now no obviously nsfw maps will be included just because I'm hosting on Google Drive.
-
-The current collection can be found here: https://drive.google.com/file/d/1qCfu-MCdqTcjVMLvjf98CFYK-Cb7XjYU/view?usp=sharing
-
-Download the collection, extract the maparts_smi folder, and paste the folder into you .minecraft folder to be able to use the SMI features.
+# Contributing
+Feel free to make pull requests with whatever new features or bug fixes may be needed and I will make sure to check them out!
 
 # Feature list
 1. Map Downloader
@@ -17,8 +13,6 @@ Download the collection, extract the maparts_smi folder, and paste the folder in
 3. Map Locker
 4. Map Namer
 5. Duplicate Finder
-6. SMI Lookup
-7. SMI Namer
 
 # Commands
 1. /nameMap x y name 
@@ -27,15 +21,11 @@ used for the map namer
 
 2. /setMaxWrongPixels max
 
-sets the amount of incorrect pixels a map can have compared to a map from duplicate checker or smi lookup (defaults to 3 every time you open the game)
+sets the amount of incorrect pixels a map can have compared to a map from duplicate checker (defaults to 3 every time you open the game)
 
 3. /clearDownloadedMaps
 
 clears the .minecraft/maparts folder
-
-4. /clearDownloadedSMIs
-
-clears the .minecraft/maparts_smi folder
 
 # Applies to everything below
 Make sure that your 3 inventory rows are empty for most of the features to work properly.
@@ -79,17 +69,3 @@ Make sure that you have all the maps loaded client side. You can do this by turn
 1. Have a shulker full of maps you want to check and all the maps you want to check against already downloaded in .minecraft/maparts
 2. Open the shulker and press numpad 2
 3. Now all the duplicates are moved to your inventory
-
-# How to check maps SMI's
-1. Have a shulker full of maps you want to check and the most recent smi collection in .minecraft/maparts_smi
-2. Open the shulker and press numpad 4
-3. Now you can see in chat the SMI of each map in the shulker
-
-# How to name SMI maps
-1. Have a shulker full of maps whose names you want to append their SMIs to, an anvil, and enough xp / xp bottles to name the maps
-2. Toggle auto namer with numpad 7 and SMI Namer mode with numpad 9
-3. Open the shulker to take out all your maps
-4. Make sure you have at least the same amount of levels as maps from shulker
-5. Open an anvil to auto name the maps
-6. Open the shulker again to put the maps back
-7. Turn auto namer back off with numpad 7 and SMI Namer mode with numpad 9

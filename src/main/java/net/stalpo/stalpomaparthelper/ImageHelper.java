@@ -14,7 +14,6 @@ public class ImageHelper {
     public static int maxWrong = 3;
 
     public static ArrayList<ImageData> images = new ArrayList<>();
-    public static ArrayList<ImageData> imagesSMI = new ArrayList<>();
 
     public static boolean sameImage(File f1, File f2){
         return sameImage(returnPixelVal(f1), returnPixelVal(f2));
@@ -43,16 +42,6 @@ public class ImageHelper {
         return false;
     }
 
-    public static String getSMI(File f){
-        byte[] pixels1 = returnPixelVal(f);
-        for(int m = 0; m < imagesSMI.size(); m++){
-            if(sameImage(pixels1, imagesSMI.get(m).getPixels())){
-                return imagesSMI.get(m).getName();
-            }
-        }
-        return null;
-    }
-
     private static byte[] returnPixelVal(File in) {
 
         BufferedImage img = null;
@@ -72,35 +61,19 @@ public class ImageHelper {
     }
 
     public static void initializeImages(){
-        clearImages(false);
+        clearImages();
         File checkdir = new File(StalpoMapartHelper.modFolder, "maparts");
         for(File f : checkdir.listFiles()){
             images.add(new ImageData(f.getName(), returnPixelVal(f)));
         }
     }
 
-    public static void initializeImagesSMI(){
-        clearImages(true);
-        File checkdir = new File(StalpoMapartHelper.modFolder, "maparts_smi");
-        for(File f : checkdir.listFiles()){
-            imagesSMI.add(new ImageData(f.getName().substring(0, f.getName().length() - 4), returnPixelVal(f)));
-        }
+    public static void addImage(File in){
+        images.add(new ImageData(in.getName(), returnPixelVal(in)));
     }
 
-    public static void addImage(boolean smi, File in){
-        if(smi){
-            imagesSMI.add(new ImageData(in.getName().substring(0, in.getName().length() - 4), returnPixelVal(in)));
-        }else{
-            images.add(new ImageData(in.getName(), returnPixelVal(in)));
-        }
-    }
-
-    public static void clearImages(boolean smi){
-        if(smi){
-            imagesSMI = new ArrayList<>();
-        }else{
-            images = new ArrayList<>();
-        }
+    public static void clearImages(){
+        images = new ArrayList<>();
     }
 }
 

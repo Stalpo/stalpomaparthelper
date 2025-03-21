@@ -37,44 +37,10 @@ public abstract class HandledScreenMixin extends Screen implements SlotClicker, 
             Util.getIoWorkerExecutor().execute(MapartShulker::downloadShulker);
         }else if(StalpoMapartHelper.keyFindDuplicates.matchesKey(keyCode, scanCode)){
             Util.getIoWorkerExecutor().execute(MapartShulker::findDuplicates);
-        }else if(StalpoMapartHelper.keyGetSMI.matchesKey(keyCode, scanCode)){
-            Util.getIoWorkerExecutor().execute(MapartShulker::getSMI);
         }else if(StalpoMapartHelper.keyFindNotLocked.matchesKey(keyCode, scanCode)){
             Util.getIoWorkerExecutor().execute(MapartShulker::findNotLocked);
         }
     }
-
-    /*@Override
-    public void stalpomaparthelper$renderMaps(List<Integer> ids, List<MapState> states){
-        for(int i = 0; i < ids.size(); i++){
-            stalpomaparthelper$renderMap(ids.get(i), states.get(i));
-        }
-    }
-
-    @Override
-    public void stalpomaparthelper$renderMap(int id, MapState state){
-        try {
-            final MatrixStack matrixStack = new MatrixStack();
-
-            // Background
-            matrixStack.push();
-            matrixStack.pop();
-
-            // Map (can you tell this part is skidded yet?)
-            matrixStack.push();
-            matrixStack.translate(3.2F, 3.2F, 401);
-            matrixStack.scale(0.45F, 0.45F, 1);
-            MinecraftClient.getInstance().gameRenderer.getMapRenderer().draw(matrixStack, new VertexConsumerProvider() {
-                @Override
-                public VertexConsumer getBuffer(RenderLayer layer) {
-                    return null;
-                }
-            }, id, state, true, 15728880);
-            matrixStack.pop();
-        } catch (Exception e){
-            // doesn't need to actually work lmao just get into draw part
-        }
-    }*/
 
     @Override
     public void StalpoMapartHelper$onMouseClick(Slot slot, int invSlot, int button, SlotActionType slotActionType){

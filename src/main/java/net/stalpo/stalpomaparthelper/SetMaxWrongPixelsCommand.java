@@ -9,7 +9,6 @@ import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
-
 public final class SetMaxWrongPixelsCommand {
     public static void registerSetMaxWrongPixels(CommandDispatcher<FabricClientCommandSource> dispatcher){
         dispatcher.register(literal("setMaxWrongPixels")
@@ -20,7 +19,7 @@ public final class SetMaxWrongPixelsCommand {
     public static int SetMaxWrongPixels(int maxWrong) {
         ImageHelper.maxWrong = maxWrong;
 
-        StalpoMapartHelper.CHAT("Set max wrong pixels for duplicate checker and smi lookup to: " + maxWrong);
+        StalpoMapartHelper.CHAT("Set max wrong pixels for duplicate checker to: " + maxWrong);
 
         return Command.SINGLE_SUCCESS;
     }

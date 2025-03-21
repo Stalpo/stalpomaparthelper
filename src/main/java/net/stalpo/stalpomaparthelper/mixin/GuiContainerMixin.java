@@ -58,11 +58,7 @@ public class GuiContainerMixin {
             AnvilScreen screen = new AnvilScreen(container, client.player.getInventory(), component);
             client.setScreen(screen);
             if(StalpoMapartHelper.mapNamerToggled){
-                if(StalpoMapartHelper.SMINamerModeToggled){
-                    Util.getIoWorkerExecutor().execute(MapartShulker::nameSMIMaps);
-                }else{
-                    Util.getIoWorkerExecutor().execute(MapartShulker::nameMaps);
-                }
+                Util.getIoWorkerExecutor().execute(MapartShulker::nameMaps);
             }
             ci.cancel();
         }

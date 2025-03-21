@@ -23,7 +23,7 @@ public final class ClearDownloadedMapsCommand {
         }
         MapartShulker.setNextMap();
 
-        ImageHelper.clearImages(false);
+        ImageHelper.clearImages();
 
         StalpoMapartHelper.CHAT("Cleared downloaded maps");
         return Command.SINGLE_SUCCESS;

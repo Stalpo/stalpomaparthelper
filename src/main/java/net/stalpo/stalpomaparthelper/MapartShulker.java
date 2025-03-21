@@ -43,7 +43,6 @@ public class MapartShulker {
     private static int mapId;
     private static MapIdComponent mapIdComponent;
     private static int nextMap;
-    private static int nextSMIMap;
 
     private static List<MapState> states;
 
@@ -99,13 +98,9 @@ public class MapartShulker {
                 mapIdComponent = (MapIdComponent)inventory.getStack(i).get(DataComponentTypes.MAP_ID);
                 mapId = mapIdComponent.id();
                 mapState = FilledMapItem.getMapState(inventory.getStack(i), MinecraftClient.getInstance().world);
-                if(StalpoMapartHelper.SMIDownloadModeToggled){
-                    downloadMap("maparts_smi", getSMIFileName(nextSMIMap));
-                    nextSMIMap = getNextSMIMap();
-                }else{
-                    downloadMap("maparts", getFileName(nextMap));
-                    nextMap = getNextMap();
-                }
+
+                downloadMap("maparts", getFileName(nextMap));
+                nextMap = getNextMap();
             }
             StalpoMapartHelper.LOGCHAT("Finished downloading shulker");
         }
@@ -162,38 +157,6 @@ public class MapartShulker {
         }
     }
 
-    public static void getSMI(){
-        if(sh != null){
-            StalpoMapartHelper.LOGCHAT("Getting SMIs");
-            Inventory inventory = ((InventoryExporter)sh).getInventory();
-
-            renderMaps(getIds(), getStates());
-
-            ImageHelper.initializeImagesSMI();
-
-            for(int i = 0; i < inventory.size(); i++){
-                if(inventory.getStack(i).getItem().getClass() != FilledMapItem.class){
-                    continue;
-                }
-
-                mapIdComponent = (MapIdComponent)inventory.getStack(i).get(DataComponentTypes.MAP_ID);
-                mapId = mapIdComponent.id();
-                mapState = FilledMapItem.getMapState(inventory.getStack(i), MinecraftClient.getInstance().world);
-                downloadMap("maparts_dump", "map"+i+".png");
-
-                File f = new File(new File(StalpoMapartHelper.modFolder, "maparts_dump"), getFileName(i));
-                String name = ImageHelper.getSMI(f);
-
-                if(name == null){
-                    StalpoMapartHelper.CHAT("Slot: " + (i + 1) + " MapId: " + mapId + " SMI: not in database");
-                }else{
-                    StalpoMapartHelper.CHAT("Slot: " + (i + 1) + " MapId: " + mapId + " SMI: " + name);
-                }
-            }
-            StalpoMapartHelper.LOGCHAT("Finished getting SMIs");
-        }
-    }
-
     private static boolean downloadMap(String DirName, String FileName){
 
         MapRenderer.MapTexture txt = ((MapRendererInvoker)MinecraftClient.getInstance().gameRenderer.getMapRenderer()).invokeGetMapTexture(mapIdComponent, mapState);
@@ -213,11 +176,7 @@ public class MapartShulker {
             return false;
         }
 
-        if(screensDir.equals("maparts_smi")){
-            ImageHelper.addImage(true, map);
-        }else if(screensDir.equals("maparts")){
-            ImageHelper.addImage(false, map);
-        }
+        ImageHelper.addImage(map);
 
         return true;
     }
@@ -386,8 +345,6 @@ public class MapartShulker {
         int syncId = MinecraftClient.getInstance().player.playerScreenHandler.syncId;
 
         // after renaming, a map can be inside crafting slots
-        // i spent 3 days to implement inventory sorting according to the sequence of names...
-        // and deleted it whole... :c
         // now i check maps if they aren't in their slot. This approach can easily deal with desyncs
         for (int slot = 0; slot < 45; slot++) {
             if (sh.getSlot(slot).getStack().getItem().getClass() != FilledMapItem.class) { continue; }
@@ -396,9 +353,7 @@ public class MapartShulker {
             if (!mapsSequence.containsKey(currentMapId)) { continue; }
 
             if (slot != mapsSequence.get(currentMapId)) {
-                // idk how to use Stalpo's click here :)
                 mc.interactionManager.clickSlot(syncId, slot, 0, SlotActionType.PICKUP, mc.player);
-                // i don't think we really need delay between clicks... But nonetheless
                 try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
                 mc.interactionManager.clickSlot(syncId, mapsSequence.get(currentMapId), 0, SlotActionType.PICKUP, mc.player);
                 try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
@@ -494,9 +449,6 @@ public class MapartShulker {
             if (currentExpLevel == 0) {
                 StalpoMapartHelper.LOGCHAT("§6Ran out of xp!");
                 MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(MapartShulker.AnvilBrokenSound, 1.0F));
-//                StalpoMapartHelper.mapNamerToggled = false;  // WHY DO YOU DISABLE AUTO NAMER
-                // Imagine if you want to do it the cheapest way possible with EBottles
-                // and it disables itself each time AAAAAAAAAAA
                 return;
             }
 
@@ -504,8 +456,6 @@ public class MapartShulker {
             // skip already renamed maps
             if (newName.equals(inventory.getStack(i + 9).getName().getString())) { continue; }
 
-            // I HATE WHEN THE MAP DOESN'T RENAME I HATE HATE HATE HATE HATE HATE HATE HATE HATE HATE HATE HATE HATE HATE HATE HATE HATE HATE HATE HATE HATE HATE
-            // 1 HATE = 1 hour spent on this
             if (anvilBroken) { return; }
             moveStack(i + 3, 0);
 
@@ -513,9 +463,9 @@ public class MapartShulker {
             do {
                 if (anvilBroken) { return; }
 
-//                these lines fix singleplayer renaming
-//                sh.onContentChanged(inventory);
-//                mc.player.networkHandler.sendPacket(new RenameItemC2SPacket(newName));
+                //these lines fix singleplayer renaming
+                //sh.onContentChanged(inventory);
+                //mc.player.networkHandler.sendPacket(new RenameItemC2SPacket(newName));
 
                 ((AnvilScreen)MinecraftClient.getInstance().currentScreen).onRenamed(newName);
                 try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
@@ -539,53 +489,6 @@ public class MapartShulker {
         // if it didn't close, then anvil didn't break, so we can play a sound
         mc.getSoundManager().play(PositionedSoundInstance.master(RenameFinishedSound, 1.0F, 2.0F));
         StalpoMapartHelper.LOGCHAT("§2Finished naming shulk!");
-    }
-
-    public static void nameSMIMaps(){
-        StalpoMapartHelper.LOGCHAT("Naming shulk");
-
-        ImageHelper.initializeImagesSMI();
-
-        Inventory inventory = MinecraftClient.getInstance().player.getInventory();
-        for(int i = 0; i < 27; i++){
-            if(inventory.getStack(i+9).getItem().getClass() != FilledMapItem.class){
-                continue;
-            }
-
-            String smi = "";
-
-            mapIdComponent = (MapIdComponent)inventory.getStack(i).get(DataComponentTypes.MAP_ID);
-            mapId = mapIdComponent.id();
-            mapState = FilledMapItem.getMapState(inventory.getStack(i), MinecraftClient.getInstance().world);
-            downloadMap("maparts_dump", "map"+i+".png");
-
-            File f = new File(new File(StalpoMapartHelper.modFolder, "maparts_dump"), getFileName(i));
-            String name = ImageHelper.getSMI(f);
-
-            if(name == null){
-                smi = "none";
-            }else{
-                smi = name.substring(0, name.length() - 4);
-            }
-
-            String n = inventory.getStack(i+9).getName().getString();
-            if (n.equals("Map")){
-                n = "";
-            }
-
-            if(MinecraftClient.getInstance().player.experienceLevel == 0){
-                StalpoMapartHelper.LOGCHAT("Ran out of xp! turning off auto namer...");
-                StalpoMapartHelper.mapNamerToggled = false;
-                return;
-            }
-
-            moveOne(i+3, 0);
-
-            ((AnvilScreen)MinecraftClient.getInstance().currentScreen).onRenamed(n + " " + smi);
-
-            swap(2, i+3);
-        }
-        StalpoMapartHelper.LOGCHAT("Finished naming shulk");
     }
 
     private static void moveOne(int from, int to){
@@ -614,13 +517,10 @@ public class MapartShulker {
     }
 
     private static void moveStack(int from, int to){
-        // I use this function in renaming instead of "swap" in case of possible desyncs
-        // added custom delays to use on different servers (default 5 ms)
         if (MinecraftClient.getInstance().currentScreen != null) {
             ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
             try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
         }
-
         if (MinecraftClient.getInstance().currentScreen != null ) {
             ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, to, 0, SlotActionType.PICKUP);
             try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
@@ -634,36 +534,17 @@ public class MapartShulker {
             i++;
         }
         nextMap = i;
-        checkdir = new File(StalpoMapartHelper.modFolder, "maparts_smi");
-        i = 1;
-        while(new File(checkdir, getSMIFileName(i)).isFile()){
-            i++;
-        }
-        nextSMIMap = i;
-        StalpoMapartHelper.LOG("nextMap: " + nextMap + " nextSMIMap: " + nextSMIMap);
+        StalpoMapartHelper.LOG("nextMap: " + nextMap);
     }
 
     private static String getFileName(int i){
         return ("map"+i+".png");
     }
 
-    private static String getSMIFileName(int i){
-        return ("SMI_"+i+"_"+(((i - 1) / 27) + 1)+"_"+(((i - 1) % 27) + 1)+".png");
-    }
-
     private static int getNextMap(){
         File checkdir = new File(StalpoMapartHelper.modFolder, "maparts");
         int i = nextMap + 1;
         while(new File(checkdir, getFileName(i)).isFile()){
-            i++;
-        }
-        return i;
-    }
-
-    private static int getNextSMIMap(){
-        File checkdir = new File(StalpoMapartHelper.modFolder, "maparts_smi");
-        int i = nextSMIMap + 1;
-        while(new File(checkdir, getSMIFileName(i)).isFile()){
             i++;
         }
         return i;

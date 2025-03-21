@@ -15,7 +15,6 @@ import org.lwjgl.glfw.GLFW;
 import java.io.File;
 
 import static net.stalpo.stalpomaparthelper.ClearDownloadedMapsCommand.registerClearDownloadedMaps;
-import static net.stalpo.stalpomaparthelper.ClearDownloadedSMIsCommand.registerClearDownloadedSMIs;
 import static net.stalpo.stalpomaparthelper.NameMapCommand.registerNameMap;
 import static net.stalpo.stalpomaparthelper.SetMaxWrongPixelsCommand.registerSetMaxWrongPixels;
 
@@ -28,13 +27,8 @@ public class StalpoMapartHelper implements ClientModInitializer {
 	public static KeyBinding keyFindNotLocked;
 	public static KeyBinding keyToggleMapCopier;
 	public static boolean mapCopierToggled;
-	public static KeyBinding keyToggleSMIDownloadMode;
-	public static boolean SMIDownloadModeToggled;
-	public static KeyBinding keyToggleSMINamerMode;
-	public static boolean SMINamerModeToggled;
 	public static KeyBinding keyToggleMapLocker;
 	public static boolean mapLockerToggled;
-	public static KeyBinding keyGetSMI;
 	public static KeyBinding keyToggleMapNamer;
 	public static boolean mapNamerToggled;
 
@@ -47,17 +41,16 @@ public class StalpoMapartHelper implements ClientModInitializer {
 		keyDownloadMaps = registerKey("Download Maps", GLFW.GLFW_KEY_KP_1);
 		keyFindDuplicates = registerKey("Find Duplicates", GLFW.GLFW_KEY_KP_2);
 		keyFindNotLocked = registerKey("Find Not Locked", GLFW.GLFW_KEY_KP_3);
-		keyGetSMI = registerKey("Get SMI", GLFW.GLFW_KEY_KP_4);
+		//keyGetSMI = registerKey("Get SMI", GLFW.GLFW_KEY_KP_4);                                 // NUMPAD 4 IS OPEN FOR NEW FEATURES IF NEEDED
 		keyToggleMapCopier = registerKey("Toggle Map Copier", GLFW.GLFW_KEY_KP_5);
 		keyToggleMapLocker = registerKey("Toggle Map Locker", GLFW.GLFW_KEY_KP_6);
 		keyToggleMapNamer = registerKey("Toggle Map Namer", GLFW.GLFW_KEY_KP_7);
-		keyToggleSMIDownloadMode = registerKey("Toggle SMI Download Mode", GLFW.GLFW_KEY_KP_8);
-		keyToggleSMINamerMode = registerKey("Toggle SMI Namer Mode", GLFW.GLFW_KEY_KP_9);
+		//keyToggleSMIDownloadMode = registerKey("Toggle SMI Download Mode", GLFW.GLFW_KEY_KP_8); // NUMPAD 8 IS OPEN FOR NEW FEATURES IF NEEDED
+		//keyToggleSMINamerMode = registerKey("Toggle SMI Namer Mode", GLFW.GLFW_KEY_KP_9);       // NUMPAD 9 IS OPEN FOR NEW FEATURES IF NEEDED
 
 		MapartShulker.setNextMap();
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerNameMap(dispatcher));
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerClearDownloadedMaps(dispatcher));
-		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerClearDownloadedSMIs(dispatcher));
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerSetMaxWrongPixels(dispatcher));
 
 		modFolder = new File(MinecraftClient.getInstance().runDirectory, "stalpomaparthelper");
@@ -66,7 +59,7 @@ public class StalpoMapartHelper implements ClientModInitializer {
 			return;
 		}
 
-		for(String s : new String[]{"maparts", "maparts_dump", "maparts_smi"}){
+		for(String s : new String[]{"maparts", "maparts_dump"}){
 			File screensDir = new File(modFolder, s);
 			if(!screensDir.exists() && !screensDir.mkdir()) {
 				StalpoMapartHelper.ERROR("Could not create directory " + screensDir.getAbsolutePath() + " cannot continue!");
@@ -75,7 +68,6 @@ public class StalpoMapartHelper implements ClientModInitializer {
 		}
 
 		Util.getIoWorkerExecutor().execute(ImageHelper::initializeImages);
-		Util.getIoWorkerExecutor().execute(ImageHelper::initializeImagesSMI);
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (keyToggleMapCopier.wasPressed()) {
@@ -85,15 +77,6 @@ public class StalpoMapartHelper implements ClientModInitializer {
 					disableOtherToggles(1);
 				}else{
 					LOGCHAT("Map copier disabled!");
-				}
-			}
-			while (keyToggleSMIDownloadMode.wasPressed()) {
-				SMIDownloadModeToggled = !SMIDownloadModeToggled;
-				if(SMIDownloadModeToggled){
-					LOGCHAT("SMI download mode enabled!");
-					CHAT("INFO: This mode is just for Stalpo");
-				}else{
-					LOGCHAT("SMI download mode disabled!");
 				}
 			}
 			while (keyToggleMapLocker.wasPressed()) {
@@ -112,14 +95,6 @@ public class StalpoMapartHelper implements ClientModInitializer {
 					disableOtherToggles(3);
 				}else{
 					LOGCHAT("Map namer disabled!");
-				}
-			}
-			while (keyToggleSMINamerMode.wasPressed()) {
-				SMINamerModeToggled = !SMINamerModeToggled;
-				if(SMINamerModeToggled){
-					LOGCHAT("SMI map namer mode enabled!");
-				}else{
-					LOGCHAT("SMI map namer mode disabled!");
 				}
 			}
 		});
