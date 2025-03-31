@@ -51,7 +51,7 @@ public class MapartShulker {
     public static int mapY = 1;
     public static int currX = 0;
     public static int currY = 0;
-    public static int delay = 5;
+    public static int delay = 20;
     public static int lastMapId = -1;
     public static boolean anvilBroken = false;
 
