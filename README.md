@@ -1,6 +1,41 @@
 # stalpomaparthelper
 A client side mapart utility mod designed for 2b2t mapart enthusiasts!
 
+# Crow patches
+
+ <b> I make some patches, especially for 2b2t. 
+ They may be broken in the singleplayer or work on the other servers not as good as on 2b2t</b> <br>
+
+[`discord`|`telegram`] --> @CrowTheBest
+
+### AutoName maparts
+ <b> Important note: SMI AutoNamer hasn't been changed </b> <br>
+
+example: `/nameMap 25 35 0 [{x}, {y}] The True Kings`
+- Now `{x}` and `{y}` require in the name. It gives you a possibility to change their positions in the name!
+- Fixed mismatch the sequence of names (x/y) (when anvil breaks, and then it tries to rename each map again)
+- Added different sounds after renaming is done or an anvil has broken
+- Removed annoying anvil sound while renaming
+- fixed a case when an anvil breaks and the renamed map is not put in its place
+- Added custom delay between actions <br>
+  It applies to each action, either rename or slot actions BUT NOT FOR TAKING AND PUTTING MAPS IN SHULKER. Be careful on the servers! <br>
+  It could be added in the future, maybe even global delay as a separate command
+
+It's quite easy in use! If you want to continue renaming process somewhere in the middle of your mapart,
+take the previous renamed maps and open an anvil. You will be notified in chat previous indexes have been updated.
+Put the maps back and take next maps, they will be renamed according to the sequence! <br>
+<b><u> Make sure you have changed the name with </u>`/nameMap`<u> command, and it matches what you've named previous maps, before open an anvil </b></u>
+
+### Taking maps from a shulker
+- Now it doesn't take any other item but maps!
+
+## TODO
+Here listed things I'm thinking on and/or want to implement
+
+- Auto copy fix, when it takes <27 empty maps and it gets stuck after renaming
+- Always take and put in a shulker a full stack of maps, if AutoNamer enabled
+
+
 # About
 This mod was made because I am too lazy to manually copy 2000+ (probably a lot more since writing this) unique maps more than once. Some of the features include: map copier, auto locker, map downloader, and a duplicate checker.
 
@@ -15,7 +50,7 @@ Feel free to make pull requests with whatever new features or bug fixes may be n
 5. Duplicate Finder
 
 # Commands
-1. /nameMap x y name 
+1. /nameMap x y delay name
 
 used for the map namer
 

@@ -2,6 +2,7 @@ package net.stalpo.stalpomaparthelper;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.AnvilScreen;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.render.MapRenderer;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
@@ -51,7 +52,7 @@ public class MapartShulker {
     public static int mapY = 1;
     public static int currX = 0;
     public static int currY = 0;
-    public static int delay = 20;
+    public static int delay = 0;
     public static int lastMapId = -1;
     public static boolean anvilBroken = false;
 
@@ -491,13 +492,24 @@ public class MapartShulker {
         StalpoMapartHelper.LOGCHAT("§2Finished naming shulk!");
     }
 
-    private static void moveOne(int from, int to){
-        ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
-        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
-        ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, to, 1, SlotActionType.PICKUP);
-        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
-        ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
-        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+    private static void moveOne(int from, int to) {
+        // 2-3 actions per tick. It's good for 2b2t but maybe not for other servers
+        MinecraftClient mc = MinecraftClient.getInstance();
+
+        // don't click if the player got kicked
+        if (mc.player == null) return;
+
+        // prevent clicks if gui closed
+        if (mc.player.currentScreenHandler.syncId == mc.player.playerScreenHandler.syncId) return;
+
+        int syncId = MinecraftClient.getInstance().player.currentScreenHandler.syncId;
+        int fromSlotCount = mc.player.currentScreenHandler.getSlot(from).getStack().getCount();
+
+        mc.interactionManager.clickSlot(syncId, from, 0, SlotActionType.PICKUP, mc.player);
+        mc.interactionManager.clickSlot(syncId, to, 1, SlotActionType.PICKUP, mc.player);
+        if (fromSlotCount > 1) { // reduce amount of packets if possible!
+            mc.interactionManager.clickSlot(syncId, from, 0, SlotActionType.PICKUP, mc.player);
+        }
     }
 
     private static void moveHalf(int from, int to){
@@ -508,12 +520,23 @@ public class MapartShulker {
     }
 
     private static void swap(int from, int to){
-        ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
-        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
-        ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, to, 0, SlotActionType.PICKUP);
-        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
-        ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
-        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+        // 2-3 actions per tick. It's good for 2b2t but maybe not for other servers
+        MinecraftClient mc = MinecraftClient.getInstance();
+
+        // don't click if the player got kicked
+        if (mc.player == null) return;
+
+        // prevent clicks if gui closed
+        if (mc.player.currentScreenHandler.syncId == mc.player.playerScreenHandler.syncId) return;
+
+        int syncId = MinecraftClient.getInstance().player.currentScreenHandler.syncId;
+        boolean destinationIsEmpty = mc.player.currentScreenHandler.getSlot(to).getStack().isEmpty();
+
+        mc.interactionManager.clickSlot(syncId, from, 0, SlotActionType.PICKUP, mc.player);
+        mc.interactionManager.clickSlot(syncId, to, 0, SlotActionType.PICKUP, mc.player);
+        if (!destinationIsEmpty) { // reduce amount of packets if possible!
+            mc.interactionManager.clickSlot(syncId, from, 0, SlotActionType.PICKUP, mc.player);
+        }
     }
 
     private static void moveStack(int from, int to){
