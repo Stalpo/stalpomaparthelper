@@ -8,32 +8,38 @@ A client side mapart utility mod designed for 2b2t mapart enthusiasts!
 
 [`discord`|`telegram`] --> @CrowTheBest
 
-### AutoName maparts
- <b> Important note: SMI AutoNamer hasn't been changed </b> <br>
+<hr>
 
-example: `/nameMap 25 35 0 [{x}, {y}] The True Kings`
-- Now `{x}` and `{y}` require in the name. It gives you a possibility to change their positions in the name!
-- Fixed mismatch the sequence of names (x/y) (when anvil breaks, and then it tries to rename each map again)
-- Added different sounds after renaming is done or an anvil has broken
-- Removed annoying anvil sound while renaming
-- fixed a case when an anvil breaks and the renamed map is not put in its place
-- Added custom delay between actions <br>
-  It applies to each action, either rename or slot actions BUT NOT FOR TAKING AND PUTTING MAPS IN SHULKER. Be careful on the servers! <br>
-  It could be added in the future, maybe even global delay as a separate command
+### Copying maparts
+- Inventory actions reduced by half!
+- Empty maps are now taken from the whole inventory, not just the hotbar.
 
-It's quite easy in use! If you want to continue renaming process somewhere in the middle of your mapart,
-take the previous renamed maps and open an anvil. You will be notified in chat previous indexes have been updated.
-Put the maps back and take next maps, they will be renamed according to the sequence! <br>
-<b><u> Make sure you have changed the name with </u>`/nameMap`<u> command, and it matches what you've named previous maps, before open an anvil </b></u>
+### Inventory actions
+- The number of packets is reduced (when possible) by checking if the target slot is empty.
 
-### Taking maps from a shulker
-- Now it doesn't take any other item but maps!
+### Inventory desync
+- Fixed desync when moving items to/from a shulker
+<hr>
+**Since "delay" is still not a global setting (Stalpo’s TODO) and must be changed manually, my build uses a delay of 22ms**
+
+### Why?
+
+Through testing, I found that the safe number of packets per tick is around 3. 
+A delay of 20 milliseconds should be fine, but some people on Discord told it’s still not enough. 
+I guess it shouldn't affect my build. Try to use lower values!
+
 
 ## TODO
 Here listed things I'm thinking on and/or want to implement
 
-- Auto copy fix, when it takes <27 empty maps and it gets stuck after renaming
 - Always take and put in a shulker a full stack of maps, if AutoNamer enabled
+- Rewrite autoRename, fixing rare desyncs
+- Add "mapart sorting". It should take & put maparts according to the name sequence
+- Improve number of packet reduction
+
+In theory, it's possible to reduce further the number of packets. Mb improve moveOne if the number of objects in the "from slot" stack is 1, but for this, the slot assignment must be empty or the same item must be stored as in "fromSlot"
+<br> Simply put, `fromSlot.getCount() < 3 && fromSlot == toSlot`
+<br> This is one of the ideas
 
 
 # About
@@ -92,13 +98,20 @@ Make sure that you have all the maps loaded client side. You can do this by turn
 # How to auto name maparts
 1. Have shulker(s) full of maps of your complete mapart IN ORDER GOING RIGHT THEN DOWN, an anvil, and enough xp / xp bottles to name the maps
 2. Toggle auto namer with numpad 7
-3. Run the /nameMap command with your maps dimensions and name
+3. Run the /nameMap command with your maps dimensions and name <br>
+   example: `/nameMap 25 35 0 [{x}, {y}] The True Kings`
 4. Open the next shulker in order to take out the maps
 5. Make sure you have at least the same amount of levels as maps from shulker
 6. Open an anvil to auto name the maps
 7. Open the shulker again to put the maps back
 8. Repeat steps 4-7 until you have named all the maps
 9. Turn auto namer back off with numpad 7
+
+<br>**Important note:** <br>
+   If you want to continue renaming process somewhere in the middle of your mapart,
+   take the previous renamed maps and open an anvil. You will be notified in chat previous indexes have been updated.
+   Put the maps back and take next maps, they will be renamed according to the sequence! <br>
+
 
 # How to check for duplicates
 1. Have a shulker full of maps you want to check and all the maps you want to check against already downloaded in .minecraft/maparts
