@@ -13,6 +13,7 @@ A client side mapart utility mod designed for 2b2t mapart enthusiasts!
 ### Copying maparts
 - Inventory actions reduced by half!
 - Empty maps are now taken from the whole inventory, not just the hotbar.
+- The copier checks if you have enough empty maps BEFORE copying the shulker!
 
 ### Inventory actions
 - The number of packets is reduced (when possible) by checking if the target slot is empty.
