@@ -20,7 +20,7 @@ A client side mapart utility mod designed for 2b2t mapart enthusiasts!
 ### Inventory desync
 - Fixed desync when moving items to/from a shulker
 <hr>
-**Since "delay" is still not a global setting (Stalpo’s TODO) and must be changed manually, my build uses a delay of 22ms**
+<b> Since "delay" is still not a global setting (Stalpo’s TODO) and must be changed manually, my build uses a delay of 22ms </b>
 
 ### Why?
 
