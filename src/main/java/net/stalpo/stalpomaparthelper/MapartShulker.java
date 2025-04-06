@@ -285,8 +285,6 @@ public class MapartShulker {
             return;
         }
 
-        StalpoMapartHelper.LOGCHAT("syncid: " + sh.syncId);
-
         List<Integer> emptyMapSlot = emptyMaps.poll();
         int emptyMapsStackCount = emptyMapSlot.get(1);
         quickMove(emptyMapSlot.get(0));
