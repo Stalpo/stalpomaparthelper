@@ -243,6 +243,7 @@ public class MapartShulker {
             }
             moveOne(i, i + 27);
         }
+        cancelUpdatesSyncId = -10;
     }
 
     private static void putShulker(){
@@ -256,6 +257,7 @@ public class MapartShulker {
             }
             moveOne(i+27, i);
         }
+        cancelUpdatesSyncId = -10;
     }
 
     public static void copyMaps() {
@@ -329,6 +331,16 @@ public class MapartShulker {
 
         // previous inventory syncing (it's possible to click any crafting slot, even if it's empty)
         // ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, 1, 0, SlotActionType.QUICK_MOVE);
+
+        // i think we can for now allow server-side updates
+        // because we've done our client-side work
+        // if we enable them, then we will avoid ping-related issues
+        // because the player will see how's it going
+        // I don't know exactly, needs more tests
+        // This statement applies to taking and putting the shulkers too
+        // because now we ignore all inv packets with current syncId
+        // will see if it's good enough!
+        cancelUpdatesSyncId = -10;
 
         StalpoMapartHelper.LOGCHAT("Finished copying maps");
     }
