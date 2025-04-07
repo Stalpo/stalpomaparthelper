@@ -267,6 +267,8 @@ public class MapartShulker {
 
         Queue<List<Integer>> emptyMaps = new LinkedList<>(); // [slot, count]
 
+        cancelUpdatesSyncId = sh.syncId;
+
         for (int slot = 10; slot < 46; slot++) {
             ItemStack stack = sh.getSlot(slot).getStack();
             if (stack.getItem() == Items.MAP) {
@@ -300,24 +302,33 @@ public class MapartShulker {
                     quickMove(emptyMapSlot.get(0));
                 }
 
+                // if we are ignoring server-side updates,
+                // then we miss the result item.
+                // recreating it on the client!
+
+                // yep, we can just send click packet to grab the item
+                // but we will face client-side inventory desync
+
+                ItemStack resultStack = filledMap.copy();
+                resultStack.setCount(2);
+
                 // reduce amount of click packets
                 if (stackCount == 1) {
                     quickMove(slot);
-                    sh.onContentChanged(mc.player.getInventory());
+                    sh.setStackInSlot(0, sh.getRevision(), resultStack);
                     swap(0, slot);
                 } else {
                     moveOne(slot, 2);
-                    sh.onContentChanged(mc.player.getInventory());
-                    ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(
-                            null, 0, 0, SlotActionType.QUICK_MOVE);
+                    sh.setStackInSlot(0, sh.getRevision(), resultStack);
+                    quickMove(0);
                 }
 
                 emptyMapsStackCount--;
             }
         }
 
-        // sync inventory
-        ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, 1, 0, SlotActionType.QUICK_MOVE);
+        // previous inventory syncing (it's possible to click any crafting slot, even if it's empty)
+        // ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, 1, 0, SlotActionType.QUICK_MOVE);
 
         StalpoMapartHelper.LOGCHAT("Finished copying maps");
     }
@@ -368,6 +379,7 @@ public class MapartShulker {
             StalpoMapartHelper.LOG("Tryng to find a map. Times: " + timer);
 
             // INVENTORY CAN BE DESYNCED OR NOT UPDATED YET WE ARE WAITING FOR SYNCHRONIZE DON'T ASK ME PLEASE IT WORKS AFTER ALL
+            // TODO: trust the server :)
         } while (timer < 50);
 
         return -1;
@@ -569,8 +581,6 @@ public class MapartShulker {
 
         // prevent clicks if gui closed
         if (mc.player.currentScreenHandler.syncId == mc.player.playerScreenHandler.syncId) return;
-
-        int syncId = MinecraftClient.getInstance().player.currentScreenHandler.syncId;
         boolean destinationIsEmpty = mc.player.currentScreenHandler.getSlot(to).getStack().isEmpty();
 
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
@@ -585,7 +595,6 @@ public class MapartShulker {
         }
 
         if (!destinationIsEmpty) { // reduce amount of packets if possible!
-            mc.interactionManager.clickSlot(syncId, from, 0, SlotActionType.PICKUP, mc.player);
             ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
             try {
                 TimeUnit.MILLISECONDS.sleep(delay);
