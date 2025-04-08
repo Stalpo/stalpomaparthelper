@@ -314,22 +314,21 @@ public class MapartShulker {
                 ItemStack resultStack = filledMap.copy();
                 resultStack.setCount(2);
 
-                // this code doesn't work for everyone as intended on 2b2t
                 // reduce amount of click packets
-//                if (stackCount == 1) {
-//                    quickMove(slot);
-//                    sh.setStackInSlot(0, sh.getRevision(), resultStack);
-//                    moveOne(0, slot);
-//                } else {
-//                    moveOne(slot, 2);
-//                    sh.setStackInSlot(0, sh.getRevision(), resultStack);
-//                    quickMove(0);
-//                }
+                if (stackCount == 1) {
+                    quickMove(slot);
+                    sh.setStackInSlot(0, sh.getRevision(), resultStack);
+                    moveOne(0, slot);
+                } else {
+                    moveOne(slot, 2);
+                    sh.setStackInSlot(0, sh.getRevision(), resultStack);
+                    quickMove(0);
+                }
 
                 // default
-                moveOne(slot, 2);
-                sh.setStackInSlot(0, sh.getRevision(), resultStack);
-                moveStack(0, slot);
+//                moveOne(slot, 2);
+//                sh.setStackInSlot(0, sh.getRevision(), resultStack);
+//                moveStack(0, slot);
 
                 emptyMapsStackCount--;
             }
@@ -574,9 +573,6 @@ public class MapartShulker {
 
         // prevent clicks if gui closed
         if (mc.player.currentScreenHandler.syncId == mc.player.playerScreenHandler.syncId) return;
-
-        int syncId = MinecraftClient.getInstance().player.currentScreenHandler.syncId;
-        int fromSlotCount = mc.player.currentScreenHandler.getSlot(from).getStack().getCount();
 
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
         try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
