@@ -325,6 +325,7 @@ public class MapartShulker {
 //                    sh.setStackInSlot(0, sh.getRevision(), resultStack);
 //                    quickMove(0);
 //                }
+
                 // default
                 moveOne(slot, 2);
                 sh.setStackInSlot(0, sh.getRevision(), resultStack);
@@ -580,10 +581,7 @@ public class MapartShulker {
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
         try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, to, 1, SlotActionType.PICKUP);
-        try {
-            TimeUnit.MILLISECONDS.sleep(delay);
-        } catch (InterruptedException ignored) {
-        }
+        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
         try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
     }
@@ -601,42 +599,35 @@ public class MapartShulker {
         boolean destinationIsEmpty = mc.player.currentScreenHandler.getSlot(to).getStack().isEmpty();
 
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
-        try {
-            TimeUnit.MILLISECONDS.sleep(delay);
-        } catch (InterruptedException ignored) {
-        }
+        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, to, 0, SlotActionType.PICKUP);
-        try {
-            TimeUnit.MILLISECONDS.sleep(delay);
-        } catch (InterruptedException ignored) {
-        }
+        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
 
         if (!destinationIsEmpty) { // reduce amount of packets if possible!
             ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
-            try {
-                TimeUnit.MILLISECONDS.sleep(delay);
-            } catch (InterruptedException ignored) {
-            }
-        }
-    }
-
-    private static void moveStack(int from, int to){
-        if (MinecraftClient.getInstance().currentScreen != null) {
-            ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
-            try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
-        }
-        if (MinecraftClient.getInstance().currentScreen != null ) {
-            ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, to, 0, SlotActionType.PICKUP);
             try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
         }
     }
 
+    private static void moveStack(int from, int to) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+
+        // don't click if the player got kicked
+        if (mc.player == null) return;
+
+        // prevent clicks if gui closed
+        if (mc.player.currentScreenHandler.syncId == mc.player.playerScreenHandler.syncId) return;
+
+        ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
+        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+
+        ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, to, 0, SlotActionType.PICKUP);
+        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+
+    }
     private static void quickMove(int slot) {
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, slot, 0, SlotActionType.QUICK_MOVE);
-        try {
-            TimeUnit.MILLISECONDS.sleep(delay);
-        } catch (InterruptedException ignored) {
-        }
+        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
     }
 
     public static void setNextMap(){
