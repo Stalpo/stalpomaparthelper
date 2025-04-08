@@ -17,11 +17,10 @@ public final class NameMapCommand {
         dispatcher.register(literal("nameMap")
                 .then(argument("x", integer())
                         .then(argument("y", integer())
-                                .then(argument("delay", integer())
                                         .then(argument("name", greedyString())
                                                 .executes(ctx -> NameMap(getString(ctx, "name"), getInteger(ctx, "x"), getInteger(ctx, "y"),
                                                         getInteger(ctx, "delay")
-                                                )))))));
+                                                ))))));
     }
 
     public static int NameMap(String name, int x, int y, int delay) {
@@ -31,7 +30,6 @@ public final class NameMapCommand {
         }
 
         MapartShulker.mapName = name;
-        MapartShulker.delay = delay;
         MapartShulker.mapX = x;
         MapartShulker.mapY = y;
         MapartShulker.currX = 0;

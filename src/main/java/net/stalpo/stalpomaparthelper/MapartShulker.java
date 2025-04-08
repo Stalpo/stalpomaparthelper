@@ -58,8 +58,7 @@ public class MapartShulker {
     public static Pattern namePattern = null;
     public static HashMap<Integer, Integer> mapsSequence;
 
-    // according to Stalpo, it will be a global setting
-    public static int delay = 22;
+    public static int delay = 20;
 
     // Grim sends slot updates, they break inventory syncing
     // 0 = inventory
