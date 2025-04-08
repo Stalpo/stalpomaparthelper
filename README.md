@@ -19,15 +19,13 @@ A client side mapart utility mod designed for 2b2t mapart enthusiasts!
 - The number of packets is reduced (when possible) by checking if the target slot is empty.
 
 ### Inventory desync
-- Fixed desync when moving items to/from a shulker
-<hr>
-<b> Since "delay" is still not a global setting (Stalpo’s TODO) and must be changed manually, my build uses a delay of 22ms </b>
+- Fixed desync when moving items to/from a shulker or copying maps
 
-### Why?
+### Delay
+- now the delay between inventory actions can be changed using `/delay value` command
 
 Through testing, I found that the safe number of packets per tick is around 3. 
-A delay of 20 milliseconds should be fine, but some people on Discord told it’s still not enough. 
-I guess it shouldn't affect my build. Try to use lower values!
+A delay of 20 milliseconds should be fine. Try to use lower values!
 
 
 ## TODO
