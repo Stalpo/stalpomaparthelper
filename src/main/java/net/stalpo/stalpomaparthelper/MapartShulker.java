@@ -34,6 +34,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MapartShulker {
+    public static final int NO_SYNC_ID = -10;
+
     public static ScreenHandler sh;
     private static MapState mapState;
     private static int mapId;
@@ -61,9 +63,9 @@ public class MapartShulker {
 
     // Grim sends slot updates, they break inventory syncing
     // 0 = inventory
-    // -1 and -2 also inventory in different states
+    // -1 and -2 also inventory in different states (server-side)
     // each opened screen (shulker, chest, etc) has its own sync id
-    public static int cancelUpdatesSyncId = -10;
+    public static int cancelUpdatesSyncId = NO_SYNC_ID;
 
     public static List<MapIdComponent> getIds(){
         Inventory inventory = ((InventoryExporter)sh).getInventory();
@@ -163,7 +165,6 @@ public class MapartShulker {
     }
 
     private static boolean downloadMap(String DirName, String FileName){
-
         MapRenderer.MapTexture txt = ((MapRendererInvoker)MinecraftClient.getInstance().gameRenderer.getMapRenderer()).invokeGetMapTexture(mapIdComponent, mapState);
 
         File screensDir = new File(StalpoMapartHelper.modFolder, DirName);
@@ -427,22 +428,22 @@ public class MapartShulker {
 
             if (slot != mapsSequence.get(currentMapId)) {
                 mc.interactionManager.clickSlot(syncId, slot, 0, SlotActionType.PICKUP, mc.player);
-                try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+                sleep();
                 mc.interactionManager.clickSlot(syncId, mapsSequence.get(currentMapId), 0, SlotActionType.PICKUP, mc.player);
-                try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+                sleep();
 
                 // THEN we synchronize previous and next slots
                 if (slot - 1 > 8) {
                     mc.interactionManager.clickSlot(syncId, slot - 1, 0, SlotActionType.PICKUP, mc.player);
-                    try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+                    sleep();
                     mc.interactionManager.clickSlot(syncId, slot - 1, 0, SlotActionType.PICKUP, mc.player);
-                    try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+                    sleep();
                 }
                 if (slot + 1 < 45) {
                     mc.interactionManager.clickSlot(syncId, slot + 1, 0, SlotActionType.PICKUP, mc.player);
-                    try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+                    sleep();
                     mc.interactionManager.clickSlot(syncId, slot + 1, 0, SlotActionType.PICKUP, mc.player);
-                    try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+                    sleep();
                 }
             }
         }
@@ -536,12 +537,12 @@ public class MapartShulker {
             do {
                 if (anvilBroken) { return; }
 
-                //these lines fix singleplayer renaming
-                //sh.onContentChanged(inventory);
-                //mc.player.networkHandler.sendPacket(new RenameItemC2SPacket(newName));
+                // these lines fix singleplayer renaming
+                // sh.onContentChanged(inventory);
+                // mc.player.networkHandler.sendPacket(new RenameItemC2SPacket(newName));
 
                 ((AnvilScreen)MinecraftClient.getInstance().currentScreen).onRenamed(newName);
-                try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+                sleep();
 
                 sh.onContentChanged(inventory);
 
@@ -563,9 +564,12 @@ public class MapartShulker {
         mc.getSoundManager().play(PositionedSoundInstance.master(RenameFinishedSound, 1.0F, 2.0F));
         StalpoMapartHelper.LOGCHAT("§2Finished naming shulk!");
     }
-
+    
+    public static void sleep() {
+        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+    }
+    
     private static void moveOne(int from, int to) {
-        // 2-3 actions per tick. It's good for 2b2t but maybe not for other servers
         MinecraftClient mc = MinecraftClient.getInstance();
 
         // don't click if the player got kicked
@@ -575,16 +579,15 @@ public class MapartShulker {
         if (mc.player.currentScreenHandler.syncId == mc.player.playerScreenHandler.syncId) return;
 
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
-        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+        sleep();
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, to, 1, SlotActionType.PICKUP);
-        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+        sleep();
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
-        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+        sleep();
     }
 
 
     private static void swap(int from, int to) {
-        // 2-3 actions per tick. It's good for 2b2t but maybe not for other servers
         MinecraftClient mc = MinecraftClient.getInstance();
 
         // don't click if the player got kicked
@@ -595,13 +598,13 @@ public class MapartShulker {
         boolean destinationIsEmpty = mc.player.currentScreenHandler.getSlot(to).getStack().isEmpty();
 
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
-        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+        sleep();
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, to, 0, SlotActionType.PICKUP);
-        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+        sleep();
 
         if (!destinationIsEmpty) { // reduce amount of packets if possible!
             ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
-            try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+            sleep();
         }
     }
 
@@ -615,15 +618,15 @@ public class MapartShulker {
         if (mc.player.currentScreenHandler.syncId == mc.player.playerScreenHandler.syncId) return;
 
         ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
-        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+        sleep();
 
         ((SlotClicker)MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, to, 0, SlotActionType.PICKUP);
-        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+        sleep();
 
     }
     private static void quickMove(int slot) {
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, slot, 0, SlotActionType.QUICK_MOVE);
-        try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
+        sleep();
     }
 
     public static void setNextMap(){
