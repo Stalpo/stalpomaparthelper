@@ -17,6 +17,7 @@ import java.io.File;
 import static net.stalpo.stalpomaparthelper.ClearDownloadedMapsCommand.registerClearDownloadedMaps;
 import static net.stalpo.stalpomaparthelper.NameMapCommand.registerNameMap;
 import static net.stalpo.stalpomaparthelper.SetMaxWrongPixelsCommand.registerSetMaxWrongPixels;
+import static net.stalpo.stalpomaparthelper.DelayCommand.registerChangeDelay;
 
 public class StalpoMapartHelper implements ClientModInitializer {
 	public static final String MOD_ID = "stalpomaparthelper";
@@ -52,6 +53,7 @@ public class StalpoMapartHelper implements ClientModInitializer {
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerNameMap(dispatcher));
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerClearDownloadedMaps(dispatcher));
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerSetMaxWrongPixels(dispatcher));
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerChangeDelay(dispatcher));
 
 		modFolder = new File(MinecraftClient.getInstance().runDirectory, "stalpomaparthelper");
 		if(!modFolder.exists() && !modFolder.mkdir()) {

@@ -14,8 +14,10 @@ Feel free to make pull requests with whatever new features or bug fixes may be n
 4. Map Namer
 5. Duplicate Finder
 
+### <b> DISABLE ExtraCraft, AutoCraft, QuickCraft and other modules that affect crafting or anvil before using the mod! </b>
+
 # Commands
-1. /nameMap x y name 
+1. /nameMap x y name
 
 used for the map namer
 
@@ -26,6 +28,10 @@ sets the amount of incorrect pixels a map can have compared to a map from duplic
 3. /clearDownloadedMaps
 
 clears the .minecraft/maparts folder
+
+4. /delay value
+
+sets the new delay value (in milliseconds) between each inventory action 
 
 # Applies to everything below
 Make sure that your 3 inventory rows are empty for most of the features to work properly.
@@ -57,13 +63,20 @@ Make sure that you have all the maps loaded client side. You can do this by turn
 # How to auto name maparts
 1. Have shulker(s) full of maps of your complete mapart IN ORDER GOING RIGHT THEN DOWN, an anvil, and enough xp / xp bottles to name the maps
 2. Toggle auto namer with numpad 7
-3. Run the /nameMap command with your maps dimensions and name
+3. Run the /nameMap command with your maps dimensions and name <br>
+   example: `/nameMap 25 35 [{x}, {y}] The True Kings`
 4. Open the next shulker in order to take out the maps
 5. Make sure you have at least the same amount of levels as maps from shulker
 6. Open an anvil to auto name the maps
 7. Open the shulker again to put the maps back
 8. Repeat steps 4-7 until you have named all the maps
 9. Turn auto namer back off with numpad 7
+
+<br>**Important note:** <br>
+   If you want to continue renaming process somewhere in the middle of your mapart,
+   take the previous renamed maps and open an anvil. You will be notified in chat previous indexes have been updated.
+   Put the maps back and take next maps, they will be renamed according to the sequence! <br>
+
 
 # How to check for duplicates
 1. Have a shulker full of maps you want to check and all the maps you want to check against already downloaded in .minecraft/maparts
