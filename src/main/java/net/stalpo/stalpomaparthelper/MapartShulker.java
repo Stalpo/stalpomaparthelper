@@ -318,7 +318,7 @@ public class MapartShulker {
                 if (stackCount == 1) {
                     quickMove(slot);
                     sh.setStackInSlot(0, sh.getRevision(), resultStack);
-                    moveOne(0, slot);
+                    moveStack(0, slot);
                 } else {
                     moveOne(slot, 2);
                     sh.setStackInSlot(0, sh.getRevision(), resultStack);
