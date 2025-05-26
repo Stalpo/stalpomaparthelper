@@ -37,6 +37,7 @@ public class MapartShulker {
     public static final int NO_SYNC_ID = -10;
 
     public static ScreenHandler sh;
+    public static Map<Integer, Runnable> callSoon = new HashMap<>(); // syncId: callable function
     private static MapState mapState;
     private static int mapId;
     private static MapIdComponent mapIdComponent;

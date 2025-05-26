@@ -3,10 +3,9 @@ package net.stalpo.stalpomaparthelper.mixin;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.InventoryS2CPacket;
+import net.minecraft.util.Util;
 import net.stalpo.stalpomaparthelper.MapartShulker;
-import net.stalpo.stalpomaparthelper.StalpoMapartHelper;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -32,8 +31,16 @@ public class SlotUpdateMixin {
         MinecraftClient mc = MinecraftClient.getInstance();
 
         if (mc.player == null || mc.currentScreen == null) return;
+        if (mc.player.currentScreenHandler.syncId != packet.getSyncId()) return;
 
         if (MapartShulker.cancelUpdatesSyncId == packet.getSyncId()) {
+            ci.cancel();
+        } else if (packet.getRevision() == 1 && MapartShulker.callSoon.containsKey(packet.getSyncId())) {
+            mc.player.currentScreenHandler.updateSlotStacks(1, packet.getContents(), packet.getCursorStack());
+
+            Util.getIoWorkerExecutor().execute(MapartShulker.callSoon.get(packet.getSyncId()));
+            MapartShulker.callSoon.remove(packet.getSyncId());
+
             ci.cancel();
         }
     }
