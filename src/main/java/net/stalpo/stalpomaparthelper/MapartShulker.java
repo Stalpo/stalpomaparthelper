@@ -58,7 +58,7 @@ public class MapartShulker {
     public static Pattern namePattern = null;
     public static HashMap<Integer, Integer> mapsSequence;
 
-    public static int delay = 20;
+    public static int delay = 65;  // 26.05.2025 - haosemaster is mad
 
     // Grim sends slot updates, they break inventory syncing
     // 0 = inventory
