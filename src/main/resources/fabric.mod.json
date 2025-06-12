@@ -27,9 +27,9 @@
 	],
 	"accessWidener": "stalpomaparthelper.accesswidener",
 	"depends": {
-		"fabricloader": ">=0.14.22",
-		"minecraft": ">=1.21.1",
-		"java": ">=17",
+		"fabricloader": ">=0.16.14",
+		"minecraft": ">=1.21.4",
+		"java": ">=21",
 		"fabric-api": "*"
 	},
 	"suggests": {

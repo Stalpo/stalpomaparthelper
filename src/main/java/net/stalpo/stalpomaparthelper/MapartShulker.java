@@ -2,11 +2,10 @@ package net.stalpo.stalpomaparthelper;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.AnvilScreen;
-import net.minecraft.client.render.MapRenderer;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.*;
 import net.minecraft.client.sound.PositionedSoundInstance;
+import net.minecraft.client.texture.MapTextureManager;
+import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
@@ -25,11 +24,13 @@ import net.stalpo.stalpomaparthelper.interfaces.InventoryExporter;
 import net.stalpo.stalpomaparthelper.interfaces.SlotClicker;
 import net.stalpo.stalpomaparthelper.mixin.MapRendererInvoker;
 import net.stalpo.stalpomaparthelper.mixin.MapTextureAccessor;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,6 +67,7 @@ public class MapartShulker {
     // -1 and -2 also inventory in different states (server-side)
     // each opened screen (shulker, chest, etc) has its own sync id
     public static int cancelUpdatesSyncId = NO_SYNC_ID;
+
 
     public static List<MapIdComponent> getIds(){
         Inventory inventory = ((InventoryExporter)sh).getInventory();
@@ -165,7 +167,16 @@ public class MapartShulker {
     }
 
     private static boolean downloadMap(String DirName, String FileName){
-        MapRenderer.MapTexture txt = ((MapRendererInvoker)MinecraftClient.getInstance().gameRenderer.getMapRenderer()).invokeGetMapTexture(mapIdComponent, mapState);
+
+
+        MapRenderer mapRenderer = MinecraftClient.getInstance().getMapRenderer();
+        // debug also nice to have here
+        if (!(mapRenderer instanceof MapRendererInvoker)) {
+            throw new IllegalStateException("Mixin not applied! MapRenderer is not an instance of MapRendererInvoker.");
+        }
+
+        // issue coming from here and above, says mapRenderer is not an instance, so the mixin is not being applied
+        MapTextureManager.MapTexture txt = ((MapRendererInvoker) mapRenderer).invokerGetMapTexture(mapIdComponent, mapState);
 
         File screensDir = new File(StalpoMapartHelper.modFolder, DirName);
         if(!screensDir.exists() && !screensDir.mkdir()) {
@@ -176,7 +187,14 @@ public class MapartShulker {
         File map = new File(screensDir, FileName);
 
         try {
-            ((MapTextureAccessor)txt).getNativeImage().getImage().writeTo(map);
+
+            NativeImage image = ((MapTextureAccessor) txt).getTexture().getImage();           if (image == null)
+            {
+                StalpoMapartHelper.ERROR("Map image is null — cannot write to file.");
+                return false;
+            }
+
+            image.writeTo(map);
         } catch (IOException e) {
             e.printStackTrace();
             return false;
@@ -654,11 +672,12 @@ public class MapartShulker {
 
     public static void renderMaps(List<MapIdComponent> ids, List<MapState> states){
         for(int i = 0; i < ids.size(); i++){
-            renderMap(ids.get(i), states.get(i));
+            MapRenderState renderState = new MapRenderState();
+            renderMap(true, renderState);
         }
     }
 
-    public static void renderMap(MapIdComponent id, MapState state){
+    public static void renderMap(Boolean showDecorations, MapRenderState renderState){
         try {
             final MatrixStack matrixStack = new MatrixStack();
 
@@ -670,12 +689,16 @@ public class MapartShulker {
             matrixStack.push();
             matrixStack.translate(3.2F, 3.2F, 401);
             matrixStack.scale(0.45F, 0.45F, 1);
-            MinecraftClient.getInstance().gameRenderer.getMapRenderer().draw(matrixStack, new VertexConsumerProvider() {
-                @Override
-                public VertexConsumer getBuffer(RenderLayer layer) {
-                    return null;
-                }
-            }, id, state, true, 15728880);
+
+            // updated this, gamerender shit got moved not just in the client class
+            MinecraftClient.getInstance().getMapRenderer().draw(
+                    renderState,
+                    matrixStack,
+                    MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers(),
+                    showDecorations,
+                    15728880
+            );
+
             matrixStack.pop();
         } catch (Exception e){
             // doesn't need to actually work lmao just get into draw part

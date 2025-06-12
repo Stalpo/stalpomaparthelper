@@ -1,3 +1,8 @@
 accessWidener v2 named
-accessible class net/minecraft/client/render/MapRenderer$MapTexture
+accessible class net/minecraft/client/texture/MapTextureManager
+accessible class net/minecraft/client/texture/MapTextureManager$MapTexture
+
 accessible method net/minecraft/client/gui/screen/ingame/AnvilScreen onRenamed (Ljava/lang/String;)V
+accessible method net/minecraft/client/texture/MapTextureManager getMapTexture (Lnet/minecraft/component/type/MapIdComponent;Lnet/minecraft/item/map/MapState;)Lnet/minecraft/client/texture/MapTextureManager$MapTexture;
+
+
