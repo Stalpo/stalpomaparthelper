@@ -1,11 +1,13 @@
 package net.stalpo.stalpomaparthelper;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.AnvilScreen;
 import net.minecraft.client.render.*;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.texture.MapTextureManager;
 import net.minecraft.client.texture.NativeImage;
+import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
@@ -22,8 +24,11 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.stalpo.stalpomaparthelper.interfaces.InventoryExporter;
 import net.stalpo.stalpomaparthelper.interfaces.SlotClicker;
-import net.stalpo.stalpomaparthelper.mixin.MapRendererInvoker;
+import net.stalpo.stalpomaparthelper.mixin.MapRendererAccessor;
+//import net.stalpo.stalpomaparthelper.mixin.MapRendererInvoker;
 import net.stalpo.stalpomaparthelper.mixin.MapTextureAccessor;
+import net.minecraft.client.texture.MapTextureManager;
+import net.stalpo.stalpomaparthelper.mixin.MapTextureManagerAccessor;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -168,15 +173,19 @@ public class MapartShulker {
 
     private static boolean downloadMap(String DirName, String FileName){
 
-
         MapRenderer mapRenderer = MinecraftClient.getInstance().getMapRenderer();
-        // debug also nice to have here
-        if (!(mapRenderer instanceof MapRendererInvoker)) {
-            throw new IllegalStateException("Mixin not applied! MapRenderer is not an instance of MapRendererInvoker.");
+
+        MapTextureManager mapTextureManager = ((MapRendererAccessor) mapRenderer).getTextureManager();
+
+        Int2ObjectMap<?> texturesByMapId = ((MapTextureManagerAccessor) mapTextureManager).getTexturesByMapId();
+        Object mapTextureObj = texturesByMapId.get(mapIdComponent.id());
+
+        if (mapTextureObj == null) {
+            StalpoMapartHelper.ERROR("Map texture is null for given mapIdComponent and mapState");
+            return false;
         }
 
-        // issue coming from here and above, says mapRenderer is not an instance, so the mixin is not being applied
-        MapTextureManager.MapTexture txt = ((MapRendererInvoker) mapRenderer).invokerGetMapTexture(mapIdComponent, mapState);
+        NativeImageBackedTexture txt = ((MapTextureAccessor) mapTextureObj).getTexture();
 
         File screensDir = new File(StalpoMapartHelper.modFolder, DirName);
         if(!screensDir.exists() && !screensDir.mkdir()) {
@@ -188,7 +197,8 @@ public class MapartShulker {
 
         try {
 
-            NativeImage image = ((MapTextureAccessor) txt).getTexture().getImage();           if (image == null)
+            NativeImage image = txt.getImage();
+            if (image == null)
             {
                 StalpoMapartHelper.ERROR("Map image is null — cannot write to file.");
                 return false;

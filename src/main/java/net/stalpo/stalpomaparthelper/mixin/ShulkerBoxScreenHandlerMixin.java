@@ -1,6 +1,7 @@
 package net.stalpo.stalpomaparthelper.mixin;
 
 import net.stalpo.stalpomaparthelper.interfaces.InventoryExporter;
+
 import net.minecraft.inventory.Inventory;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;

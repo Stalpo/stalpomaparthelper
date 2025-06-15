@@ -15,6 +15,7 @@
   "client": [
     "AnvilSoundSuppressMixin",
     "SlotUpdateMixin",
-    "MapRendererInvoker"
+    "MapTextureManagerAccessor",
+    "MapRendererAccessor"
   ]
 }
