@@ -2,8 +2,8 @@ package net.stalpo.stalpomaparthelper;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.AnvilScreen;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.MapRenderState;
+import net.minecraft.client.render.MapRenderer;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.texture.MapTextureManager;
 import net.minecraft.client.texture.NativeImage;
@@ -17,6 +17,7 @@ import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
+import net.minecraft.network.packet.c2s.play.RenameItemC2SPacket;
 import net.minecraft.screen.AnvilScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
@@ -25,17 +26,13 @@ import net.minecraft.sound.SoundEvents;
 import net.stalpo.stalpomaparthelper.interfaces.InventoryExporter;
 import net.stalpo.stalpomaparthelper.interfaces.SlotClicker;
 import net.stalpo.stalpomaparthelper.mixin.MapRendererAccessor;
-//import net.stalpo.stalpomaparthelper.mixin.MapRendererInvoker;
 import net.stalpo.stalpomaparthelper.mixin.MapTextureAccessor;
-import net.minecraft.client.texture.MapTextureManager;
 import net.stalpo.stalpomaparthelper.mixin.MapTextureManagerAccessor;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -58,6 +55,7 @@ public class MapartShulker {
     public static int currX = 0;
     public static int currY = 0;
     public static int lastMapId = -1;
+    public static boolean incrementY = true;
     public static boolean anvilBroken = false;
 
     public static SoundEvent AnvilBrokenSound = SoundEvents.ENTITY_VILLAGER_NO;
@@ -93,7 +91,7 @@ public class MapartShulker {
         return ids;
     }
 
-    public static List<MapState> getStates(){
+    public static List<MapState> getStates() {
         return states;
     }
 
@@ -250,15 +248,17 @@ public class MapartShulker {
         }
     }
 
-    public static void putTakeCheck(){
+    public static void putTakeCheck() {
         Inventory inventory = MinecraftClient.getInstance().player.getInventory();
-        for(int i = 9; i < 36; i++){
-            if(inventory.getStack(i).getItem().getClass() == FilledMapItem.class){
+
+        for (int i = 9; i < 36; i++) {
+            if (inventory.getStack(i).getItem().getClass() == FilledMapItem.class) {
                 putShulker();
                 return;
             }
         }
-        takeShulker();
+        if (StalpoMapartHelper.mapNamerToggled) renameTakeShulker();
+        else takeShulker();
     }
 
     private static void takeShulker() {
@@ -272,7 +272,7 @@ public class MapartShulker {
             }
             moveOne(i, i + 27);
         }
-        cancelUpdatesSyncId = -10;
+        cancelUpdatesSyncId = NO_SYNC_ID;
     }
 
     private static void putShulker(){
@@ -286,8 +286,65 @@ public class MapartShulker {
             }
             moveOne(i+27, i);
         }
-        cancelUpdatesSyncId = -10;
+        cancelUpdatesSyncId = NO_SYNC_ID;
     }
+
+
+    private static void renameTakeShulker() {
+        // this function takes maps that don't match the sequence
+        // or doesn't take at all but update the sequence
+        StalpoMapartHelper.LOGCHAT("Taking shulker for renaming");
+
+        String regex = Pattern.quote(mapName)
+                .replace("{x}", "\\E(?<x>\\d+)\\Q")
+                .replace("{y}", "\\E(?<y>\\d+)\\Q");
+        namePattern = Pattern.compile("^" + regex + "$", Pattern.UNICODE_CASE);
+
+        boolean isFirstMap = true;
+
+        cancelUpdatesSyncId = sh.syncId;
+        for (int i = 0; i < 27; i++) {
+            if (sh.getSlot(i).getStack().getItem() != Items.FILLED_MAP) {
+                continue;
+            }
+            // (copy from nameMap function)
+            if (!isFirstMap || !(currY == 0 && currX == 0)) {
+                if (incrementY) {
+                    currY++;
+                    if (currY == mapY) {
+                        currY = 0;
+                        currX++;
+                    }
+                } else {
+                    currX++;
+                    if (currX == mapX) {
+                        currX = 0;
+                        currY++;
+                    }
+                }
+            }
+
+            Matcher checkName = namePattern.matcher(sh.getSlot(i).getStack().getName().getString());
+            if (checkName.matches()) {  // trying to find the latest renamed map
+                int MatchedX = Integer.parseInt(checkName.group("x"));
+                int MatchedY = Integer.parseInt(checkName.group("y"));
+                // correct current x and y in case an anvil has broken
+                if (isFirstMap) {
+                    currX = MatchedX;
+                    currY = MatchedY;
+                    isFirstMap = false;
+                    continue;
+                }
+                // skip if current map matches the sequence
+                else if (currX == MatchedX && currY == MatchedY) {
+                    continue;
+                }
+            }
+            moveStack(i, i + 27);
+        }
+        cancelUpdatesSyncId = NO_SYNC_ID;
+    }
+
 
     public static void copyMaps() {
         StalpoMapartHelper.LOGCHAT("Copying maps");
@@ -374,10 +431,11 @@ public class MapartShulker {
         // This statement applies to taking and putting the shulkers too
         // because now we ignore all inv packets with current syncId
         // will see if it's good enough!
-        cancelUpdatesSyncId = -10;
+        cancelUpdatesSyncId = NO_SYNC_ID;
 
         StalpoMapartHelper.LOGCHAT("Finished copying maps");
     }
+
     public static void lockMaps(){
         StalpoMapartHelper.LOGCHAT("Locking maps");
         Inventory inventory = MinecraftClient.getInstance().player.getInventory();
@@ -481,6 +539,7 @@ public class MapartShulker {
         anvilBroken = false;
         lastMapId = -1;
         mapsSequence = new HashMap<>();
+        cancelUpdatesSyncId = sh.syncId;
 
         String regex = Pattern.quote(mapName)
                 .replace("{x}", "\\E(?<x>\\d+)\\Q")
@@ -505,17 +564,25 @@ public class MapartShulker {
         }
 
         for (int i = 0; i < 27; i++) {
-            if (anvilBroken) { return; }
-            if (inventory.getStack(i + 9).getItem().getClass() != FilledMapItem.class) { continue; }
+            if (anvilBroken) return;
+            if (inventory.getStack(i + 9).getItem().getClass() != FilledMapItem.class) continue;
 
             mapsSequence.put(inventory.getStack(i + 9).get(DataComponentTypes.MAP_ID).id(), i + 9);
 
             // set current X and Y
             if (!(IsFirstMap) || !(currY == 0 && currX == 0)) {
-                currX++;
-                if (currX == mapX) {
-                    currX = 0;
+                if (incrementY) {
                     currY++;
+                    if (currY == mapY) {
+                        currY = 0;
+                        currX++;
+                    }
+                } else {
+                    currX++;
+                    if (currX == mapX) {
+                        currX = 0;
+                        currY++;
+                    }
                 }
             }
 
@@ -556,34 +623,28 @@ public class MapartShulker {
 
             String newName = mapName.replace("{x}", Integer.toString(currX)).replace("{y}", Integer.toString(currY));
             // skip already renamed maps
-            if (newName.equals(inventory.getStack(i + 9).getName().getString())) { continue; }
+            if (newName.equals(inventory.getStack(i + 9).getName().getString())) continue;
 
-            if (anvilBroken) { return; }
-            moveStack(i + 3, 0);
+            if (anvilBroken) return;
+            quickMove(i + 3);
 
-            // this loop ensures the server ACTUALLY processed renaming
-            do {
-                if (anvilBroken) { return; }
+            ((AnvilScreenHandler) sh).setNewItemName(newName);
 
-                // these lines fix singleplayer renaming
-                // sh.onContentChanged(inventory);
-                // mc.player.networkHandler.sendPacket(new RenameItemC2SPacket(newName));
-
-                ((AnvilScreen)MinecraftClient.getInstance().currentScreen).onRenamed(newName);
-                sleep();
-
-                sh.onContentChanged(inventory);
-
-            } while (!Objects.equals(mc.player.currentScreenHandler.getSlot(2).getStack().getName().getString(), newName));
+            mc.player.networkHandler.sendPacket(new RenameItemC2SPacket(newName));
 
             moveStack(2, i + 3);
+            // fix client-side desync (for some reason this slot doesn't update as fast as we need)
+            sh.setStackInSlot(0, sh.getRevision(), ItemStack.EMPTY);
+
             currentExpLevel--;
         }
 
+        cancelUpdatesSyncId = NO_SYNC_ID;
+
         // here in 99% cases each map has been renamed and the anvil hasn't broken
-        // so, we wait some time
+        // so, we wait some time (ping-related thing. It's better to wait for a specific revision)
         try { TimeUnit.MILLISECONDS.sleep(150); } catch (InterruptedException ignored) { }
-        if (anvilBroken) { return; }
+        if (anvilBroken) return;
 
         // I want to play another sound if ALL maps have been renamed
         // we can face a broken anvil on the last renamed map, so we are waiting for anvil gui to close

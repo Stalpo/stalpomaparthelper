@@ -64,7 +64,8 @@ Make sure that you have all the maps loaded client side. You can do this by turn
 1. Have shulker(s) full of maps of your complete mapart IN ORDER GOING RIGHT THEN DOWN, an anvil, and enough xp / xp bottles to name the maps
 2. Toggle auto namer with numpad 7
 3. Run the /nameMap command with your maps dimensions and name <br>
-   example: `/nameMap 25 35 [{x}, {y}] The True Kings`
+   `/nameMap x y incrementY name` <br>
+   example: `/nameMap 25 35 true [{x}, {y}] The True Kings`
 4. Open the next shulker in order to take out the maps
 5. Make sure you have at least the same amount of levels as maps from shulker
 6. Open an anvil to auto name the maps
@@ -74,8 +75,11 @@ Make sure that you have all the maps loaded client side. You can do this by turn
 
 <br>**Important note:** <br>
    If you want to continue renaming process somewhere in the middle of your mapart,
-   take the previous renamed maps and open an anvil. You will be notified in chat previous indexes have been updated.
+   take the previous renamed maps and open an anvil or just open a shulker with them. You will be notified in chat "previous indexes have been updated".
    Put the maps back and take next maps, they will be renamed according to the sequence! <br>
+<br>**Increment Y:** <br>
+   `true` -> sequence y+1: `[0, 0], [0, 1], [0, 2], [0, 3], ...`<br>
+   `false` -> sequence x+1: `[0, 0], [1, 0], [2, 0], [3, 0], ...`
 
 
 # How to check for duplicates
