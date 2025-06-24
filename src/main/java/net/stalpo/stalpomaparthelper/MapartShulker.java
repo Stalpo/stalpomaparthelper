@@ -301,6 +301,7 @@ public class MapartShulker {
         namePattern = Pattern.compile("^" + regex + "$", Pattern.UNICODE_CASE);
 
         boolean isFirstMap = true;
+        boolean checkTheSequence = true;
 
         cancelUpdatesSyncId = sh.syncId;
         for (int i = 0; i < 27; i++) {
@@ -308,38 +309,52 @@ public class MapartShulker {
                 continue;
             }
             // (copy from nameMap function)
-            if (!isFirstMap || !(currY == 0 && currX == 0)) {
-                if (incrementY) {
-                    currY++;
-                    if (currY == mapY) {
-                        currY = 0;
-                        currX++;
-                    }
-                } else {
-                    currX++;
-                    if (currX == mapX) {
-                        currX = 0;
+            if (checkTheSequence) {
+                if (!isFirstMap || !(currY == 0 && currX == 0)) {
+                    if (incrementY) {
                         currY++;
+                        if (currY == mapY) {
+                            currY = 0;
+                            currX++;
+                        }
+                    } else {
+                        currX++;
+                        if (currX == mapX) {
+                            currX = 0;
+                            currY++;
+                        }
                     }
+                }
+
+                // okay sooo we check the first sequence till it breaks
+                // otherwise we have to cache it like that: {map_id: new_name}
+                // to handle possible breaks. Its edge case tho, doesn't need to be fixed yet
+                Matcher checkName = namePattern.matcher(sh.getSlot(i).getStack().getName().getString());
+                if (checkName.matches()) {  // trying to find the latest map that matches the sequence
+                    int MatchedX = Integer.parseInt(checkName.group("x"));
+                    int MatchedY = Integer.parseInt(checkName.group("y"));
+                    if (isFirstMap) {
+                        currX = MatchedX;
+                        currY = MatchedY;
+                        isFirstMap = false;
+                        continue;
+                    }
+                    // skip if current map matches the sequence
+                    else if (currX == MatchedX && currY == MatchedY) {
+                        continue;
+                    }
+                }
+
+                if (!(currY == 0 && currX == 0)) {
+                    if (currY == 0) {
+                        currX--;
+                        currY = mapY - 1;
+                    } else currY--;
                 }
             }
 
-            Matcher checkName = namePattern.matcher(sh.getSlot(i).getStack().getName().getString());
-            if (checkName.matches()) {  // trying to find the latest renamed map
-                int MatchedX = Integer.parseInt(checkName.group("x"));
-                int MatchedY = Integer.parseInt(checkName.group("y"));
-                // correct current x and y in case an anvil has broken
-                if (isFirstMap) {
-                    currX = MatchedX;
-                    currY = MatchedY;
-                    isFirstMap = false;
-                    continue;
-                }
-                // skip if current map matches the sequence
-                else if (currX == MatchedX && currY == MatchedY) {
-                    continue;
-                }
-            }
+            isFirstMap = false;
+            checkTheSequence = false;
             moveStack(i, i + 27);
         }
         cancelUpdatesSyncId = NO_SYNC_ID;
