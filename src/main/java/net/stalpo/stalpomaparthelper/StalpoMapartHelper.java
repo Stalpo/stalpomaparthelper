@@ -16,6 +16,7 @@ import java.io.File;
 
 import static net.stalpo.stalpomaparthelper.ClearDownloadedMapsCommand.registerClearDownloadedMaps;
 import static net.stalpo.stalpomaparthelper.NameMapCommand.registerNameMap;
+import static net.stalpo.stalpomaparthelper.NameMapCommand.registerNameMapWithoutY;
 import static net.stalpo.stalpomaparthelper.SetMaxWrongPixelsCommand.registerSetMaxWrongPixels;
 import static net.stalpo.stalpomaparthelper.DelayCommand.registerChangeDelay;
 
@@ -51,6 +52,7 @@ public class StalpoMapartHelper implements ClientModInitializer {
 
 		MapartShulker.setNextMap();
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerNameMap(dispatcher));
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerNameMapWithoutY(dispatcher));
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerClearDownloadedMaps(dispatcher));
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerSetMaxWrongPixels(dispatcher));
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerChangeDelay(dispatcher));

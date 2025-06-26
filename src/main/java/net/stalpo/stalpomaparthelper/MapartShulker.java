@@ -28,12 +28,12 @@ import net.stalpo.stalpomaparthelper.interfaces.SlotClicker;
 import net.stalpo.stalpomaparthelper.mixin.MapRendererAccessor;
 import net.stalpo.stalpomaparthelper.mixin.MapTextureAccessor;
 import net.stalpo.stalpomaparthelper.mixin.MapTextureManagerAccessor;
+import net.stalpo.stalpomaparthelper.sequence.NameSequence;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MapartShulker {
@@ -49,13 +49,8 @@ public class MapartShulker {
     private static List<MapState> states;
 
     // rename maparts
-    public static String mapName = "StalpoIsAwesome! ({x} {y})";
-    public static int mapX = 1;
-    public static int mapY = 1;
-    public static int currX = 0;
-    public static int currY = 0;
+    public static NameSequence sequence = new NameSequence();
     public static int lastMapId = -1;
-    public static boolean incrementY = true;
     public static boolean anvilBroken = false;
 
     public static SoundEvent AnvilBrokenSound = SoundEvents.ENTITY_VILLAGER_NO;
@@ -295,66 +290,25 @@ public class MapartShulker {
         // or doesn't take at all but update the sequence
         StalpoMapartHelper.LOGCHAT("Taking shulker for renaming");
 
-        String regex = Pattern.quote(mapName)
-                .replace("{x}", "\\E(?<x>\\d+)\\Q")
-                .replace("{y}", "\\E(?<y>\\d+)\\Q");
-        namePattern = Pattern.compile("^" + regex + "$", Pattern.UNICODE_CASE);
-
-        boolean isFirstMap = true;
-        boolean checkTheSequence = true;
+        sequence.carryOverSequence = true;  // isFirstMap (that doesn't match the sequence)
 
         cancelUpdatesSyncId = sh.syncId;
         for (int i = 0; i < 27; i++) {
+            if (sequence.reachedEnd()) {
+                StalpoMapartHelper.LOGCHAT("§2Nothing to take - finished naming shulk!");
+                break;
+            }
+
             if (sh.getSlot(i).getStack().getItem() != Items.FILLED_MAP) {
                 continue;
             }
-            // (copy from nameMap function)
-            if (checkTheSequence) {
-                if (!isFirstMap || !(currY == 0 && currX == 0)) {
-                    if (incrementY) {
-                        currY++;
-                        if (currY == mapY) {
-                            currY = 0;
-                            currX++;
-                        }
-                    } else {
-                        currX++;
-                        if (currX == mapX) {
-                            currX = 0;
-                            currY++;
-                        }
-                    }
-                }
 
-                // okay sooo we check the first sequence till it breaks
-                // otherwise we have to cache it like that: {map_id: new_name}
-                // to handle possible breaks. Its edge case tho, doesn't need to be fixed yet
-                Matcher checkName = namePattern.matcher(sh.getSlot(i).getStack().getName().getString());
-                if (checkName.matches()) {  // trying to find the latest map that matches the sequence
-                    int MatchedX = Integer.parseInt(checkName.group("x"));
-                    int MatchedY = Integer.parseInt(checkName.group("y"));
-                    if (isFirstMap) {
-                        currX = MatchedX;
-                        currY = MatchedY;
-                        isFirstMap = false;
-                        continue;
-                    }
-                    // skip if current map matches the sequence
-                    else if (currX == MatchedX && currY == MatchedY) {
-                        continue;
-                    }
-                }
-
-                if (!(currY == 0 && currX == 0)) {
-                    if (currY == 0) {
-                        currX--;
-                        currY = mapY - 1;
-                    } else currY--;
-                }
+            if (sequence.isFollowingSequence(sh.getSlot(i).getStack().getName().getString())) {
+                if (sequence.carryOverSequence) sequence.carryOverSequence = false;
+                sequence.increment(); // next potential map
+                continue;
             }
 
-            isFirstMap = false;
-            checkTheSequence = false;
             moveStack(i, i + 27);
         }
         cancelUpdatesSyncId = NO_SYNC_ID;
@@ -522,10 +476,10 @@ public class MapartShulker {
         // after renaming, a map can be inside crafting slots
         // now i check maps if they aren't in their slot. This approach can easily deal with desyncs
         for (int slot = 0; slot < 45; slot++) {
-            if (sh.getSlot(slot).getStack().getItem().getClass() != FilledMapItem.class) { continue; }
+            if (sh.getSlot(slot).getStack().getItem().getClass() != FilledMapItem.class) continue;
 
             int currentMapId = sh.getSlot(slot).getStack().get(DataComponentTypes.MAP_ID).id();
-            if (!mapsSequence.containsKey(currentMapId)) { continue; }
+            if (!mapsSequence.containsKey(currentMapId)) continue;
 
             if (slot != mapsSequence.get(currentMapId)) {
                 mc.interactionManager.clickSlot(syncId, slot, 0, SlotActionType.PICKUP, mc.player);
@@ -553,105 +507,68 @@ public class MapartShulker {
     public static void nameMaps() {
         anvilBroken = false;
         lastMapId = -1;
+        // this sequence should be in "net.stalpo.stalpomaparthelper.sequence" folder as it is like mapId: mapSlot.
+        // We probably will use it in the future more frequently.
         mapsSequence = new HashMap<>();
         cancelUpdatesSyncId = sh.syncId;
 
-        String regex = Pattern.quote(mapName)
-                .replace("{x}", "\\E(?<x>\\d+)\\Q")
-                .replace("{y}", "\\E(?<y>\\d+)\\Q");
-        namePattern = Pattern.compile("^" + regex + "$", Pattern.UNICODE_CASE);
-
         MinecraftClient mc = MinecraftClient.getInstance();
-        PlayerInventory inventory = mc.player.getInventory();
         int currentExpLevel = mc.player.experienceLevel;
 
         StalpoMapartHelper.LOGCHAT("Naming shulk");
 
-        boolean IsFirstMap = true;  // we don't know where the first map is
-        boolean NeedToCheckOffsets = true;  // it becomes false if the first map in inventory has other name than ours OR if the name doesn't match the sequence
+        sequence.carryOverSequence = true;
 
         // searching for last map in inventory. Check AnvilSoundSuppressMixin
-        for (int i = 27; i > 0; i--) {
-            if (inventory.getStack(i + 9).getItem().getClass() == FilledMapItem.class) {
-                lastMapId = inventory.getStack(i + 9).get(DataComponentTypes.MAP_ID).id();
+        for (int i = 30; i > 2; i--) {
+            if (sh.getSlot(i).getStack().getItem().getClass() == FilledMapItem.class) {
+                lastMapId = sh.getSlot(i).getStack().get(DataComponentTypes.MAP_ID).id();
                 break;
             }
         }
 
-        for (int i = 0; i < 27; i++) {
+        // 0-2 - anvil slots
+        // 3-29 - inventory
+        // 30-38 - hotbar
+        for (int i = 3; i < 30; i++) {
             if (anvilBroken) return;
-            if (inventory.getStack(i + 9).getItem().getClass() != FilledMapItem.class) continue;
+            if (sequence.reachedEnd()) break;
 
-            mapsSequence.put(inventory.getStack(i + 9).get(DataComponentTypes.MAP_ID).id(), i + 9);
+            StalpoMapartHelper.LOGCHAT("slot:" + i + " isMap: " + (sh.getSlot(i).getStack().getItem().getClass() != FilledMapItem.class));
+            if (sh.getSlot(i).getStack().getItem().getClass() != FilledMapItem.class) continue;
 
-            // set current X and Y
-            if (!(IsFirstMap) || !(currY == 0 && currX == 0)) {
-                if (incrementY) {
-                    currY++;
-                    if (currY == mapY) {
-                        currY = 0;
-                        currX++;
-                    }
-                } else {
-                    currX++;
-                    if (currX == mapX) {
-                        currX = 0;
-                        currY++;
-                    }
-                }
-            }
+            mapsSequence.put(sh.getSlot(i).getStack().get(DataComponentTypes.MAP_ID).id(), i + 6); // the slot index should be as in playerScreenHandler
 
             // skip already renamed maps
-            Matcher checkName = namePattern.matcher(inventory.getStack(i + 9).getName().getString());
-            if (NeedToCheckOffsets && checkName.matches()) {  // trying to find the latest renamed map
-                int MatchedX = Integer.parseInt(checkName.group("x"));
-                int MatchedY = Integer.parseInt(checkName.group("y"));
-
-                // correct current x and y in case an anvil has broken
-                if (IsFirstMap) {
-                    currX = MatchedX;
-                    currY = MatchedY;
-                    IsFirstMap = false;
-                    continue;
+            if (sequence.isFollowingSequence(sh.getSlot(i).getStack().getName().getString())) {
+                if (sequence.carryOverSequence) {
+                    StalpoMapartHelper.LOGCHAT("Previous indexes were updated.\nx: " + sequence.getCurrX() + ",  y: " + sequence.getCurrY());
+                    sequence.carryOverSequence = false;
                 }
-                // skip if current map matches the sequence
-                else if (currX == MatchedX && currY == MatchedY) {
-                    continue;
-                }
+                sequence.increment();
+                continue;
             }
 
-            // we found a map without our name! Yaaaaay!
-            // (btw it can be a map with our name, but classified as "not matched" (or not renamed) )
-            if (NeedToCheckOffsets) {
-                StalpoMapartHelper.LOGCHAT("Previous indexes were updated.\nx: " + currX + ",  y: " + currY);
-                NeedToCheckOffsets = false;
-            }
-
-            IsFirstMap = false;
-
-            // I decided to calculate player exp level locally because server sometimes tells the player has 1 exp, but they haven't
+            // I decided to calculate player exp level locally because server sometimes tells the player has 1 exp, but they don't
             if (currentExpLevel == 0) {
                 StalpoMapartHelper.LOGCHAT("§6Ran out of xp!");
                 MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(MapartShulker.AnvilBrokenSound, 1.0F));
                 return;
             }
 
-            String newName = mapName.replace("{x}", Integer.toString(currX)).replace("{y}", Integer.toString(currY));
-            // skip already renamed maps
-            if (newName.equals(inventory.getStack(i + 9).getName().getString())) continue;
-
-            if (anvilBroken) return;
-            quickMove(i + 3);
+            String newName = sequence.getCurrentMapName();
+            quickMove(i);
 
             ((AnvilScreenHandler) sh).setNewItemName(newName);
 
             mc.player.networkHandler.sendPacket(new RenameItemC2SPacket(newName));
 
-            moveStack(2, i + 3);
+            moveStack(2, i);
             // fix client-side desync (for some reason this slot doesn't update as fast as we need)
             sh.setStackInSlot(0, sh.getRevision(), ItemStack.EMPTY);
 
             currentExpLevel--;
+            sequence.increment();
         }
 
         cancelUpdatesSyncId = NO_SYNC_ID;
