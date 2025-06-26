@@ -51,8 +51,6 @@ public class NameSequence {
         this.namePattern = Pattern.compile("^" + regex + "$", Pattern.UNICODE_CASE);
     }
 
-    ;
-
     public int getCurrX() {
         return currX;
     }

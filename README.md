@@ -61,11 +61,15 @@ Make sure that you have all the maps loaded client side. You can do this by turn
 6. Turn auto locker back off with numpad 6
 
 # How to auto name maparts
-1. Have shulker(s) full of maps of your complete mapart IN ORDER GOING RIGHT THEN DOWN, an anvil, and enough xp / xp bottles to name the maps
+1. Have shulker(s) full of maps of your complete mapart IN ORDER GOING RIGHT THEN DOWN (default order), an anvil, and enough xp / xp bottles to name the maps
 2. Toggle auto namer with numpad 7
 3. Run the /nameMap command with your maps dimensions and name <br>
-   `/nameMap x y incrementY name` <br>
-   example: `/nameMap 25 35 true [{x}, {y}] The True Kings`
+   `/nameMap x y incrementY name` or <br>
+   `/nameMap totalX name` <br>
+    examples: <br>
+    `/nameMap 25 35 true [{x}, {y}] The True Kings` <br>
+    `/nameMap 432 Nocom {cur} Remade by Deafboy45` <br>
+    `/nameMap 96 Fallen Angel ({cur}/{total}) - by Vahali` - {total} is optional
 4. Open the next shulker in order to take out the maps
 5. Make sure you have at least the same amount of levels as maps from shulker
 6. Open an anvil to auto name the maps
