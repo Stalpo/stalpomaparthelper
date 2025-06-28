@@ -17,7 +17,8 @@ Feel free to make pull requests with whatever new features or bug fixes may be n
 ### <b> DISABLE ExtraCraft, AutoCraft, QuickCraft and other modules that affect crafting or anvil before using the mod! </b>
 
 # Commands
-1. /nameMap x y name
+1. /nameMap x y incrementY name (if you have [x, y] -> [999, 999]) <br>
+   /nameMap x name (if you have 1 -> x)
 
 used for the map namer
 
