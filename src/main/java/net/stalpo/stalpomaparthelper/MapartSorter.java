@@ -142,7 +142,12 @@ public class MapartSorter extends MapartShulker {
 
         for (int slot = 0; slot < 27; slot++) {
             ItemStack stack = sh.getSlot(slot).getStack();
-            if (stack.isEmpty()) return;
+            if (stack.isEmpty()) {
+                // this shulk is a source shulk, not the shulk we put the maps into
+                putSortSequence.setCurrX(thisX);
+                putSortSequence.setCurrY(thisY);
+                return;
+            };
 
             if (stack.getItem() == Items.FILLED_MAP && putSortSequence.isFollowingSequence(stack.getName().getString())) {
                 int thisSerial = putSortSequence.getSequenceSerialNumber(false);
