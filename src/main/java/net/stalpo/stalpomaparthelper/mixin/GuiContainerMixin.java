@@ -5,6 +5,7 @@ import net.minecraft.client.gui.screen.ingame.*;
 import net.minecraft.screen.*;
 import net.minecraft.text.Text;
 import net.stalpo.stalpomaparthelper.MapartShulker;
+import net.stalpo.stalpomaparthelper.MapartSorter;
 import net.stalpo.stalpomaparthelper.StalpoMapartHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,6 +30,8 @@ public class GuiContainerMixin {
                 MapartShulker.callSoon.put(syncId, MapartShulker::putTakeCheck);
             }else if(StalpoMapartHelper.mapLockerToggled){
                 MapartShulker.callSoon.put(syncId, MapartShulker::lockShulkerCheck);
+            }else if (StalpoMapartHelper.mapSorterToggled){
+                MapartShulker.callSoon.put(syncId, MapartSorter::sortMaps);
             }
             ci.cancel();
         } else if(type == ScreenHandlerType.CRAFTING){

@@ -42,7 +42,7 @@ public class MapartShulker {
     public static ScreenHandler sh;
     public static Map<Integer, Runnable> callSoon = new HashMap<>(); // syncId: callable function
     private static MapState mapState;
-    private static int mapId;
+    private static int mapId; // Stalpo? Delete this maybe??
     private static MapIdComponent mapIdComponent;
     private static int nextMap;
 
@@ -590,7 +590,7 @@ public class MapartShulker {
         try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
     }
     
-    private static void moveOne(int from, int to) {
+    protected static void moveOne(int from, int to) {
         MinecraftClient mc = MinecraftClient.getInstance();
 
         // don't click if the player got kicked
@@ -608,7 +608,7 @@ public class MapartShulker {
     }
 
 
-    private static void swap(int from, int to) {
+    protected static void swap(int from, int to) {
         MinecraftClient mc = MinecraftClient.getInstance();
 
         // don't click if the player got kicked
@@ -629,7 +629,7 @@ public class MapartShulker {
         }
     }
 
-    private static void moveStack(int from, int to) {
+    protected static void moveStack(int from, int to) {
         MinecraftClient mc = MinecraftClient.getInstance();
 
         // don't click if the player got kicked
@@ -645,7 +645,7 @@ public class MapartShulker {
         sleep();
 
     }
-    private static void quickMove(int slot) {
+    protected static void quickMove(int slot) {
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, slot, 0, SlotActionType.QUICK_MOVE);
         sleep();
     }

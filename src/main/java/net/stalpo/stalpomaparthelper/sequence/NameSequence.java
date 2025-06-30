@@ -16,7 +16,9 @@ public class NameSequence {
     private int currX = 0;
     private int currY = 0;
     private boolean incrementY = true; // doesn't matter is isMultiDimensional = false
-    private boolean isMultiDimensional = true; // if false, use "StalpoIsAwesome! ({current}/{total})" starting with 1
+    // if false, use "StalpoIsAwesome! ({current}/{total})" starting with 1
+    // change it to enum or something if you gonna add another map names pattern
+    private boolean isMultiDimensional = true;
     private Pattern namePattern = null;
     private int matchedX = 0;
     private int matchedY = 0;
@@ -37,8 +39,8 @@ public class NameSequence {
         } else {
             this.currX = 1;
             String regex = Pattern.quote(mapName)
-                    .replace("{cur}", "\\E(?<x>\\d+)\\Q")
-                    .replace("{total}", "\\E(?<y>\\d+)\\Q");
+                    .replace("{cur}", "\\E(?<cur>\\d+)\\Q")
+                    .replace("{total}", "\\E(?<total>\\d+)\\Q");
             this.namePattern = Pattern.compile("^" + regex + "$", Pattern.UNICODE_CASE);
         }
     }
@@ -59,9 +61,26 @@ public class NameSequence {
         return currY;
     }
 
+    public int getMapX() {
+        return mapX;
+    }
+
+    public int getMapY() {
+        return mapY;
+    }
+
     public Pattern getNamePattern() {
         return namePattern;
     }
+
+    public void setCurrX(int value) {
+        currX = value;
+    }
+
+    public void setCurrY(int value) {
+        currY = value;
+    }
+
 
     public void increment() {
         // uuhhh basically it is infinity and won't stop if both maximum x and y were reached
@@ -113,10 +132,13 @@ public class NameSequence {
         Matcher checkName = namePattern.matcher(text);
 
         if (checkName.matches()) {
-            matchedX = Integer.parseInt(checkName.group("x"));
-            matchedY = Integer.parseInt(checkName.group("y"));
+            if (isMultiDimensional) {
+                matchedX = Integer.parseInt(checkName.group("x"));
+                matchedY = Integer.parseInt(checkName.group("y"));
+            } else {
+                matchedX = Integer.parseInt(checkName.group("cur"));
+            }
         }
-
         return checkName.matches();
     }
 
@@ -133,11 +155,11 @@ public class NameSequence {
                 if (matchedX == 0) return false; // does not allow starting from 0
                 if (carryOverSequence) {
                     currX = matchedX;
+                    carryOverSequence = false;
                 }
                 return currX == matchedX;
             }
         }
-
         return false;
     }
 
@@ -153,5 +175,43 @@ public class NameSequence {
         if (isMultiDimensional)
             return (currX >= mapX || currY >= mapY); // can't be [20, 20] if maximum is [20, 20] because starts with 0
         else return currX > mapX; // can be 20/20 etc
+    }
+
+    public int getSequenceSerialNumber(boolean useCurrent) {
+        // 0 means the first slot in the shulker
+        // therefore serial number starts with 0
+        int thisX = useCurrent ? currX : matchedX;
+        int thisY = useCurrent ? currY : matchedY;
+
+        if (!isMultiDimensional) return thisX - 1;
+
+            // [0, 0] = 0
+            // [0, 1] = 1
+            // [0, 2] = 2
+            // [1, 0] = 3
+            // [1, 1] = 4 and so on
+        else {
+            if (incrementY) return thisX * mapY + thisY;
+            else return thisY * mapX + thisX;
+        }
+        // divide the result by 27 and you will have its slot in the shulker
+    }
+
+    public int[] getDimensionsBySerialNumber(int serial) {
+        if (!isMultiDimensional) return new int[]{serial + 1};
+
+            // 0 = [0, 0]
+            // 1 = [0, 1]
+            // 2 = [0, 2]
+            // 3 = [1, 0] and so on
+        else {
+            if (incrementY) return new int[]{serial / mapY, serial % mapY};
+            else return new int[]{serial / mapX, serial % mapX};
+        }
+    }
+
+    public int getMaxSerialNumber() {
+        if (isMultiDimensional) return mapX * mapY - 1;
+        else return mapX - 1;
     }
 }

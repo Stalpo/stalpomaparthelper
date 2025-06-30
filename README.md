@@ -13,6 +13,7 @@ Feel free to make pull requests with whatever new features or bug fixes may be n
 3. Map Locker
 4. Map Namer
 5. Duplicate Finder
+6. Map sorter
 
 ### <b> DISABLE ExtraCraft, AutoCraft, QuickCraft and other modules that affect crafting or anvil before using the mod! </b>
 
@@ -32,7 +33,12 @@ clears the .minecraft/maparts folder
 
 4. /delay value
 
-sets the new delay value (in milliseconds) between each inventory action 
+sets the new delay value (in milliseconds) between each inventory action
+
+5. /sortMap x y incrementY name (if you have [x, y] -> [999, 999]) <br>
+   /sortMap x name (if you have 1 -> x)
+
+used for the map sorter
 
 # Applies to everything below
 Make sure that your 3 inventory rows are empty for most of the features to work properly.
@@ -62,7 +68,7 @@ Make sure that you have all the maps loaded client side. You can do this by turn
 6. Turn auto locker back off with numpad 6
 
 # How to auto name maparts
-1. Have shulker(s) full of maps of your complete mapart IN ORDER GOING RIGHT THEN DOWN (default order), an anvil, and enough xp / xp bottles to name the maps
+1. Have shulker(s) full of maps of your completed mapart IN ORDER GOING RIGHT THEN DOWN (default order), an anvil, and enough xp / xp bottles to name the maps
 2. Toggle auto namer with numpad 7
 3. Run the /nameMap command with your maps dimensions and name <br>
    `/nameMap x y incrementY name` or <br>
@@ -91,3 +97,26 @@ Make sure that you have all the maps loaded client side. You can do this by turn
 1. Have a shulker full of maps you want to check and all the maps you want to check against already downloaded in .minecraft/maparts
 2. Open the shulker and press numpad 2
 3. Now all the duplicates are moved to your inventory
+
+# How to sort maparts
+It uses the commands described in the [Mapart Namer](#how-to-auto-name-maparts) <br>
+**Showcase:** https://youtu.be/w8MAEJrSXBk
+
+1. Place all shulkers filled with maps of your completed mapart to take the maps from them
+2. Place empty shulkers to put the maps into them. The mod tries to sort the maps in the existing shulkers
+3. Run the /sortMap command with your maps dimensions and name <br>
+   `/sortMap x y incrementY name` or <br>
+   `/sortMap totalX name` <br>
+4. Toggle autoSorter with numpad4
+5. Open shulkers with maps. The copier will either sort them or take the maps
+6. Open an empty shulker to put the maps into
+7. Repeat 5 and 6 until all maps sorted! You will be notified in chat
+8. Turn auto sorter back off with numpad 4
+
+**Important note:** <br>
+    You have to have the full sequence of maps! The sorter won't continue if there's a missing map or its name is different.
+
+If you faced a bug - tell us about it and then type the command again in the chat. It resets the progress, so you can try to sort the maps again.
+Don't forget to open the last shulker that was sorted to restore the sequence!
+
+Obviously, you can't sort nameless maps.
