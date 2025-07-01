@@ -534,7 +534,6 @@ public class MapartShulker {
             if (anvilBroken) return;
             if (sequence.reachedEnd()) break;
 
-            StalpoMapartHelper.LOGCHAT("slot:" + i + " isMap: " + (sh.getSlot(i).getStack().getItem().getClass() != FilledMapItem.class));
             if (sh.getSlot(i).getStack().getItem().getClass() != FilledMapItem.class) continue;
 
             mapsSequence.put(sh.getSlot(i).getStack().get(DataComponentTypes.MAP_ID).id(), i + 6); // the slot index should be as in playerScreenHandler
