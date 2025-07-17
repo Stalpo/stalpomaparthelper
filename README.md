@@ -14,6 +14,7 @@ Feel free to make pull requests with whatever new features or bug fixes may be n
 4. Map Namer
 5. Duplicate Finder
 6. Map sorter
+7. Put in/pull out of a bundle
 
 ### <b> DISABLE ExtraCraft, AutoCraft, QuickCraft and other modules that affect crafting or anvil before using the mod! </b>
 
@@ -120,3 +121,17 @@ If you faced a bug - tell us about it and then type the command again in the cha
 Don't forget to open the last shulker that was sorted to restore the sequence!
 
 Obviously, you can't sort nameless maps.
+
+# Put maps in/pull out of a bundle
+**Make sure you have bundles in the hotbar!**
+
+### Putting maps
+The mod puts the maps from left to right, using bundles from 1 -> 9 slot in hotbar, upper left slot -> lower right slot
+
+### Pulling maps
+The mod pulls the maps **backwards**, from right to left, using bundles from 9 -> 1 slot in hotbar, lower right slot -> upper left slot
+
+### Usage
+1. Open a chest, a shulker or an inventory
+2. **Putting maps:** press **arrow down** (make sure you have maps in the container)
+<br> **Pulling maps:** press **arrow up** (make sure your bundles are not empty)
