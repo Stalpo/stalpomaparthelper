@@ -5,6 +5,7 @@
   "mixins": [
     "GuiContainerMixin",
     "HandledScreenMixin",
+    "MapIdFixMixin",
     "MapTextureAccessor",
     "ShulkerBoxScreenHandlerMixin",
     "ThreadsafeRandomMixin"
