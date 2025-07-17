@@ -18,6 +18,7 @@
     "MapTextureManagerAccessor",
     "SlotUpdateMixin",
     "SoundSystemAccessor",
+    "ThreadsafeChatRenderMixin",
     "ThreadsafeSoundSystemMixin"
   ]
 }
