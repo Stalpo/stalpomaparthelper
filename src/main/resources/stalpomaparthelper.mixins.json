@@ -6,16 +6,18 @@
     "GuiContainerMixin",
     "HandledScreenMixin",
     "MapTextureAccessor",
-    "ShulkerBoxScreenHandlerMixin"
-
+    "ShulkerBoxScreenHandlerMixin",
+    "ThreadsafeRandomMixin"
   ],
   "injectors": {
     "defaultRequire": 1
   },
   "client": [
     "AnvilSoundSuppressMixin",
-    "SlotUpdateMixin",
+    "MapRendererAccessor",
     "MapTextureManagerAccessor",
-    "MapRendererAccessor"
+    "SlotUpdateMixin",
+    "SoundSystemAccessor",
+    "ThreadsafeSoundSystemMixin"
   ]
 }
