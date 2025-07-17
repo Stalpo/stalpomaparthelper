@@ -2,6 +2,7 @@ package net.stalpo.stalpomaparthelper;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.MapRenderState;
 import net.minecraft.client.render.MapRenderer;
 import net.minecraft.client.sound.PositionedSoundInstance;
@@ -10,10 +11,12 @@ import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.BundleContentsComponent;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.FilledMapItem;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
@@ -29,6 +32,7 @@ import net.stalpo.stalpomaparthelper.mixin.MapRendererAccessor;
 import net.stalpo.stalpomaparthelper.mixin.MapTextureAccessor;
 import net.stalpo.stalpomaparthelper.mixin.MapTextureManagerAccessor;
 import net.stalpo.stalpomaparthelper.sequence.NameSequence;
+import org.apache.commons.lang3.math.Fraction;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,6 +69,26 @@ public class MapartShulker {
     // -1 and -2 also inventory in different states (server-side)
     // each opened screen (shulker, chest, etc) has its own sync id
     public static int cancelUpdatesSyncId = NO_SYNC_ID;
+
+    public static List<Item> bundles = List.of(
+            Items.BUNDLE,
+            Items.WHITE_BUNDLE,
+            Items.BLACK_BUNDLE,
+            Items.BLUE_BUNDLE,
+            Items.BROWN_BUNDLE,
+            Items.CYAN_BUNDLE,
+            Items.GRAY_BUNDLE,
+            Items.GREEN_BUNDLE,
+            Items.LIME_BUNDLE,
+            Items.MAGENTA_BUNDLE,
+            Items.LIGHT_BLUE_BUNDLE,
+            Items.LIGHT_GRAY_BUNDLE,
+            Items.ORANGE_BUNDLE,
+            Items.PINK_BUNDLE,
+            Items.PURPLE_BUNDLE,
+            Items.RED_BUNDLE,
+            Items.YELLOW_BUNDLE);
+    private static boolean processActive = false;  // we are doing something with bundles
 
 
     public static List<MapIdComponent> getIds(){
@@ -515,8 +539,6 @@ public class MapartShulker {
         MinecraftClient mc = MinecraftClient.getInstance();
         int currentExpLevel = mc.player.experienceLevel;
 
-        StalpoMapartHelper.LOGCHAT("Naming shulk");
-
         sequence.carryOverSequence = true;
 
         // searching for last map in inventory. Check AnvilSoundSuppressMixin
@@ -584,11 +606,163 @@ public class MapartShulker {
         mc.getSoundManager().play(PositionedSoundInstance.master(RenameFinishedSound, 1.0F, 2.0F));
         StalpoMapartHelper.LOGCHAT("§2Finished naming shulk!");
     }
+
+    public static void putMapsToBundle() {
+        if (processActive) return;
+
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        if (player.currentScreenHandler == null || player.currentScreenHandler.syncId == 0)
+            sh = player.playerScreenHandler;
+        else sh = player.currentScreenHandler;
+
+        processActive = true;
+
+        int screenSize = sh.syncId == 0 ? 44 : sh.getStacks().size() - 1; // ignore offhand in the inventory
+        int inventory = screenSize - 36;  // inventory starts from this slot
+        int hotbar = screenSize - 9;  // hotbar starts from this slot
+        int startSlot = inventory - 27 >= -1 ? 0 : inventory + 1;  // take/put from/to a shulker/chest
+        int endSlot = inventory - 27 >= -1 ? inventory : hotbar;
+
+        int bundleSlot = 0;
+        int canPutCount = 0;
+
+        try {
+            for (int slot = hotbar; slot <= screenSize; slot++) {
+                ItemStack stack = sh.getSlot(slot).getStack();
+
+                if (!bundles.contains(stack.getItem())) continue;
+
+                BundleContentsComponent bundleComponent = stack.get(DataComponentTypes.BUNDLE_CONTENTS);
+
+                if (bundleComponent == null) continue; // should never happen
+                Fraction bundleSize = bundleComponent.getOccupancy();
+
+                if (bundleSize.equals(Fraction.ONE)) continue; // the bundle is full
+
+                bundleSlot = slot;
+
+                Fraction available = Fraction.ONE.subtract(bundleComponent.getOccupancy());
+                canPutCount = 64 / available.getNumerator() * available.getDenominator();
+                break;
+            }
+
+            if (bundleSlot == 0) {
+                processActive = false;
+                return;
+            }
+
+            boolean bundleTaken = false;
+            for (int slot = startSlot; slot <= endSlot; slot++) {
+                if (canPutCount == 0) break;
+
+                ItemStack stack = sh.getSlot(slot).getStack();
+
+                if (stack.getItem() != Items.FILLED_MAP) continue;
+
+                if (!bundleTaken) {
+                    pickUp(bundleSlot, 0);
+                    bundleTaken = true;
+                }
+
+                pickUp(slot, 0);
+                canPutCount--;
+            }
+
+            if (bundleTaken) pickUp(bundleSlot, 0);
+        } catch (Exception e) {
+            processActive = false;
+            throw new RuntimeException(e);
+        }
+        processActive = false;
+    }
+
+    public static void pullMapsOutOfBundle() {
+        if (processActive) return;
+
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        if (player.currentScreenHandler == null || player.currentScreenHandler.syncId == 0)
+            sh = player.playerScreenHandler;
+        else sh = player.currentScreenHandler;
+
+        processActive = true;
+
+        int screenSize = sh.syncId == 0 ? 44 : sh.getStacks().size() - 1; // ignore offhand in the inventory
+
+        int inventory = screenSize - 36;  // inventory starts from this slot
+        int hotbar = screenSize - 9;  // hotbar starts from this slot
+        int startSlot = inventory - 27 >= -1 ? inventory : hotbar;  // take/put from/to a shulker/chest
+        int endSlot = inventory - 27 >= -1 ? 0 : inventory + 1;
+
+        int bundleSlot = 0;
+        int canTakeCount = 0;
+        try {
+            // do it backwards
+            for (int slot = screenSize; slot > hotbar; slot--) {
+                ItemStack stack = sh.getSlot(slot).getStack();
+
+                if (!bundles.contains(stack.getItem())) continue;
+
+                BundleContentsComponent bundleComponent = stack.get(DataComponentTypes.BUNDLE_CONTENTS);
+
+                if (bundleComponent == null) continue; // should never happen
+                Fraction bundleSize = bundleComponent.getOccupancy();
+
+                if (bundleSize.equals(Fraction.ZERO)) continue; // the bundle is empty
+
+                // check if there are filled maps only
+                if (bundleComponent.stream().map(item -> item.getItem() == Items.FILLED_MAP).toList().contains(false))
+                    continue;
+
+                bundleSlot = slot;
+                canTakeCount = bundleComponent.size();
+                break;
+            }
+
+            if (bundleSlot == 0) {
+                processActive = false;
+                return;
+            }
+
+            boolean bundleTaken = false;
+            for (int slot = startSlot; slot >= endSlot; slot--) {
+                if (canTakeCount == 0) break;
+
+                if (!sh.getSlot(slot).getStack().isEmpty()) continue;
+
+                if (!bundleTaken) {
+                    pickUp(bundleSlot, 0);
+                    bundleTaken = true;
+                }
+
+                pickUp(slot, 1);
+                canTakeCount--;
+            }
+
+            if (bundleTaken) pickUp(bundleSlot, 0);
+        } catch (Exception e) {
+            processActive = false;
+            throw new RuntimeException(e);
+        }
+        processActive = false;
+    }
     
     public static void sleep() {
         try { TimeUnit.MILLISECONDS.sleep(delay); } catch (InterruptedException ignored) { }
     }
-    
+
+    synchronized protected static void pickUp(int slot, int button) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+
+        // don't click if the player got kicked
+        if (mc.player == null) return;
+
+        // prevent clicks if gui closed
+        if (mc.player.currentScreenHandler == null) return;
+
+        ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, slot, button, SlotActionType.PICKUP);
+        sleep();
+    }
+
     protected static void moveOne(int from, int to) {
         MinecraftClient mc = MinecraftClient.getInstance();
 
@@ -596,7 +770,7 @@ public class MapartShulker {
         if (mc.player == null) return;
 
         // prevent clicks if gui closed
-        if (mc.player.currentScreenHandler.syncId == mc.player.playerScreenHandler.syncId) return;
+        if (mc.player.currentScreenHandler == null) return;
 
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
         sleep();
@@ -614,7 +788,7 @@ public class MapartShulker {
         if (mc.player == null) return;
 
         // prevent clicks if gui closed
-        if (mc.player.currentScreenHandler.syncId == mc.player.playerScreenHandler.syncId) return;
+        if (mc.player.currentScreenHandler == null) return;
         boolean destinationIsEmpty = mc.player.currentScreenHandler.getSlot(to).getStack().isEmpty();
 
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, from, 0, SlotActionType.PICKUP);
@@ -645,6 +819,14 @@ public class MapartShulker {
 
     }
     protected static void quickMove(int slot) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+
+        // don't click if the player got kicked
+        if (mc.player == null) return;
+
+        // prevent clicks if gui closed
+        if (mc.player.currentScreenHandler.syncId == mc.player.playerScreenHandler.syncId) return;
+
         ((SlotClicker) MinecraftClient.getInstance().currentScreen).StalpoMapartHelper$onMouseClick(null, slot, 0, SlotActionType.QUICK_MOVE);
         sleep();
     }

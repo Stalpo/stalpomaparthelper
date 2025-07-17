@@ -37,6 +37,8 @@ public class StalpoMapartHelper implements ClientModInitializer {
 	public static boolean mapNamerToggled;
 	public static KeyBinding keyToggleMapSorter;
 	public static boolean mapSorterToggled;
+	public static KeyBinding keyPutInTheBundle;
+	public static KeyBinding keyPullOutOfTheBundle;
 
 	public static File modFolder;
 
@@ -51,6 +53,8 @@ public class StalpoMapartHelper implements ClientModInitializer {
 		keyToggleMapCopier = registerKey("Toggle Map Copier", GLFW.GLFW_KEY_KP_5);
 		keyToggleMapLocker = registerKey("Toggle Map Locker", GLFW.GLFW_KEY_KP_6);
 		keyToggleMapNamer = registerKey("Toggle Map Namer", GLFW.GLFW_KEY_KP_7);
+		keyPutInTheBundle = registerKey("Put in a bundle", GLFW.GLFW_KEY_DOWN);  // arrow down
+		keyPullOutOfTheBundle = registerKey("Take from a bundle", GLFW.GLFW_KEY_UP);  // arrow up
 		//keyToggleSMIDownloadMode = registerKey("Toggle SMI Download Mode", GLFW.GLFW_KEY_KP_8); // NUMPAD 8 IS OPEN FOR NEW FEATURES IF NEEDED
 		//keyToggleSMINamerMode = registerKey("Toggle SMI Namer Mode", GLFW.GLFW_KEY_KP_9);       // NUMPAD 9 IS OPEN FOR NEW FEATURES IF NEEDED
 

@@ -11,8 +11,8 @@ public class NameSequence {
     // You have to rename the first map in the shulk to something else if you do not need to update the sequence (if its match)
     public boolean carryOverSequence = true;
     private String mapName = "StalpoIsAwesome! ({x} {y})";
-    private int mapX = 1;
-    private int mapY = 1;
+    private int mapX = 100;
+    private int mapY = 9;
     private int currX = 0;
     private int currY = 0;
     private boolean incrementY = true; // doesn't matter is isMultiDimensional = false
