@@ -1,6 +1,5 @@
 package net.stalpo.stalpomaparthelper.mixin;
 
-
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.sound.Channel;
 import net.minecraft.client.sound.SoundInstance;
