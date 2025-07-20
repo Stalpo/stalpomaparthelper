@@ -26,19 +26,28 @@ public class StalpoMapartHelper implements ClientModInitializer {
 	public static final String MOD_ID = "stalpomaparthelper";
 	private static final String category = "Stalpo Mapart Helper";
 	private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
 	public static KeyBinding keyDownloadMaps;
 	public static KeyBinding keyFindDuplicates;
 	public static KeyBinding keyFindNotLocked;
-	public static KeyBinding keyToggleMapCopier;
-	public static boolean mapCopierToggled;
-	public static KeyBinding keyToggleMapLocker;
-	public static boolean mapLockerToggled;
-	public static KeyBinding keyToggleMapNamer;
-	public static boolean mapNamerToggled;
-	public static KeyBinding keyToggleMapSorter;
-	public static boolean mapSorterToggled;
+
 	public static KeyBinding keyPutInTheBundle;
 	public static KeyBinding keyPullOutOfTheBundle;
+
+	public static KeyBinding keyToggleMapCopier;
+	public static boolean mapCopierToggled;
+
+	public static KeyBinding keyToggleMapLocker;
+	public static boolean mapLockerToggled;
+
+	public static KeyBinding keyToggleMapNamer;
+	public static boolean mapNamerToggled;
+
+	public static KeyBinding keyToggleMapSorter;
+	public static boolean mapSorterToggled;
+
+	public static KeyBinding keyToggleQuickTakeMaps;
+	public static boolean quickTakeMapsToggled;
 
 	public static File modFolder;
 
@@ -55,7 +64,7 @@ public class StalpoMapartHelper implements ClientModInitializer {
 		keyToggleMapNamer = registerKey("Toggle Map Namer", GLFW.GLFW_KEY_KP_7);
 		keyPutInTheBundle = registerKey("Put in a bundle", GLFW.GLFW_KEY_DOWN);  // arrow down
 		keyPullOutOfTheBundle = registerKey("Take from a bundle", GLFW.GLFW_KEY_UP);  // arrow up
-		//keyToggleSMIDownloadMode = registerKey("Toggle SMI Download Mode", GLFW.GLFW_KEY_KP_8); // NUMPAD 8 IS OPEN FOR NEW FEATURES IF NEEDED
+		keyToggleQuickTakeMaps = registerKey("Toggle map switcher", GLFW.GLFW_KEY_KP_8);
 		//keyToggleSMINamerMode = registerKey("Toggle SMI Namer Mode", GLFW.GLFW_KEY_KP_9);       // NUMPAD 9 IS OPEN FOR NEW FEATURES IF NEEDED
 
 		MapartShulker.setNextMap();
@@ -120,6 +129,20 @@ public class StalpoMapartHelper implements ClientModInitializer {
 					LOGCHAT("Map sorter disabled!");
 				}
 			}
+			while (keyToggleQuickTakeMaps.wasPressed()) {
+				quickTakeMapsToggled = !quickTakeMapsToggled;
+				if (quickTakeMapsToggled) {
+					LOGCHAT("Quick-take from bundles enabled!");
+				} else {
+					LOGCHAT("Quick-take from bundles disabled!");
+				}
+			}
+		});
+
+		ClientTickEvents.START_CLIENT_TICK.register(client -> {
+			if (!quickTakeMapsToggled) return;
+			if (MinecraftClient.getInstance() == null || MinecraftClient.getInstance().player == null) return;
+			Bundles.quickTakeFromBundle(client);
 		});
 	}
 

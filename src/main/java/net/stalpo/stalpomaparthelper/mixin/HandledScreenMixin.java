@@ -5,6 +5,7 @@ import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Util;
+import net.stalpo.stalpomaparthelper.Bundles;
 import net.stalpo.stalpomaparthelper.MapartShulker;
 import net.stalpo.stalpomaparthelper.StalpoMapartHelper;
 import net.stalpo.stalpomaparthelper.interfaces.FakeMapRenderer;
@@ -31,9 +32,9 @@ public abstract class HandledScreenMixin extends Screen implements SlotClicker, 
         } else if (StalpoMapartHelper.keyFindNotLocked.matchesKey(keyCode, scanCode)) {
             Util.getIoWorkerExecutor().execute(MapartShulker::findNotLocked);
         } else if (StalpoMapartHelper.keyPutInTheBundle.matchesKey(keyCode, scanCode)) {
-            Util.getIoWorkerExecutor().execute(MapartShulker::putMapsToBundle);
+            Util.getIoWorkerExecutor().execute(Bundles::putMapsToBundle);
         } else if (StalpoMapartHelper.keyPullOutOfTheBundle.matchesKey(keyCode, scanCode)) {
-            Util.getIoWorkerExecutor().execute(MapartShulker::pullMapsOutOfBundle);
+            Util.getIoWorkerExecutor().execute(Bundles::pullMapsOutOfBundle);
         }
     }
 

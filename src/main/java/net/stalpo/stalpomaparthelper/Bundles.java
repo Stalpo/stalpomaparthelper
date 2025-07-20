@@ -7,6 +7,7 @@ import net.minecraft.component.type.BundleContentsComponent;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.screen.slot.SlotActionType;
 import org.apache.commons.lang3.math.Fraction;
 
 import java.util.List;
@@ -34,6 +35,9 @@ public class Bundles extends MapartShulker {
 
     private static boolean bundleProcessActive = false;  // we are doing something with bundles
 
+    private static int skipUntilRevision = 0;
+    private static int skipTicks = 0;
+
     public static int getBundleSlot(int firstSlot, int secondSlot, boolean backwards, boolean allowEmptyBundle) {
         // returns the number of the slot with a bundle that empty or contains only filled maps
         // backwards - from a bigger slot to a lower slot (45 -> 36)
@@ -47,8 +51,6 @@ public class Bundles extends MapartShulker {
 
         int fromSlot = Math.min(firstSlot, secondSlot);
         int toSlot = Math.max(firstSlot, secondSlot);
-
-        System.out.println("from " + fromSlot + " to " + toSlot);
 
         for (; fromSlot <= toSlot; fromSlot++) {
             int slot = Math.abs(fromSlot);
@@ -211,5 +213,34 @@ public class Bundles extends MapartShulker {
             throw new RuntimeException(e);
         }
         bundleProcessActive = false;
+    }
+
+    public static void quickTakeFromBundle(MinecraftClient mc) {
+        if (mc.currentScreen != null) return; // don't restock if any screen was opened
+        sh = mc.player.playerScreenHandler;
+
+        if (sh.getRevision() < skipUntilRevision) {
+            // wait some time to accept the inv updates from the server properly (5 ticks on 2b2t are enough btw)
+            if (++skipTicks <= 5) return;
+        }
+
+        if (!sh.getSlot(44).getStack().isEmpty()) return;
+
+        int bundleSlot = getBundleSlot(44, 35, true, false);
+
+        if (bundleSlot == -1) return;
+
+        var previousScreenHandler = mc.player.currentScreenHandler;
+        mc.player.currentScreenHandler = sh;
+
+        // zero-tick. Should be fine
+        // StalpoMapartHelper$onMouseClick can't be used here because mc.currentScreen is null
+        mc.interactionManager.clickSlot(0, bundleSlot, 0, SlotActionType.PICKUP, mc.player);
+        mc.interactionManager.clickSlot(0, 44, 1, SlotActionType.PICKUP, mc.player);
+        mc.interactionManager.clickSlot(0, bundleSlot, 0, SlotActionType.PICKUP, mc.player);
+
+        mc.player.currentScreenHandler = previousScreenHandler;
+        skipUntilRevision = sh.getRevision() + 2; // maybe 3. I checked the value in singleplayer but not on 2b2t. It works - it's fine
+        skipTicks = 0;
     }
 }
