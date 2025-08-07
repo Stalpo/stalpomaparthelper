@@ -1,8 +1,9 @@
 package net.stalpo.stalpomaparthelper;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.gui.screen.ingame.AnvilScreen;
 import net.minecraft.client.render.MapRenderState;
 import net.minecraft.client.render.MapRenderer;
 import net.minecraft.client.sound.PositionedSoundInstance;
@@ -11,15 +12,14 @@ import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.BundleContentsComponent;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
+import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
 import net.minecraft.network.packet.c2s.play.RenameItemC2SPacket;
 import net.minecraft.screen.AnvilScreenHandler;
 import net.minecraft.screen.ScreenHandler;
@@ -31,14 +31,13 @@ import net.stalpo.stalpomaparthelper.interfaces.SlotClicker;
 import net.stalpo.stalpomaparthelper.mixin.MapRendererAccessor;
 import net.stalpo.stalpomaparthelper.mixin.MapTextureAccessor;
 import net.stalpo.stalpomaparthelper.mixin.MapTextureManagerAccessor;
+import net.stalpo.stalpomaparthelper.sequence.MapIdSequence;
 import net.stalpo.stalpomaparthelper.sequence.NameSequence;
-import org.apache.commons.lang3.math.Fraction;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 
 public class MapartShulker {
     public static final int NO_SYNC_ID = -10;
@@ -54,13 +53,11 @@ public class MapartShulker {
 
     // rename maparts
     public static NameSequence sequence = new NameSequence();
-    public static int lastMapId = -1;
+    public static MapIdSequence mapsOrder = new MapIdSequence();
     public static boolean anvilBroken = false;
 
     public static SoundEvent AnvilBrokenSound = SoundEvents.ENTITY_VILLAGER_NO;
     public static SoundEvent RenameFinishedSound = SoundEvents.BLOCK_AMETHYST_BLOCK_STEP;
-    public static Pattern namePattern = null;
-    public static HashMap<Integer, Integer> mapsSequence;
 
     public static int delay = 65;  // 26.05.2025 - haosemaster is mad
 
@@ -69,7 +66,8 @@ public class MapartShulker {
     // -1 and -2 also inventory in different states (server-side)
     // each opened screen (shulker, chest, etc) has its own sync id
     public static int cancelUpdatesSyncId = NO_SYNC_ID;
-
+    public static List<String> receivedSlots = new ArrayList<>();  // itemStack is not equals the same itemStack, lol. Well, I use item names then
+    // TODO: create a custom object contains {stackName, stackCount, stackItemName} to use it instead of strings
 
     public static List<MapIdComponent> getIds(){
         Inventory inventory = ((InventoryExporter)sh).getInventory();
@@ -274,16 +272,49 @@ public class MapartShulker {
         cancelUpdatesSyncId = NO_SYNC_ID;
     }
 
-    private static void putShulker(){
+    private static void putShulker() {
         StalpoMapartHelper.LOGCHAT("Putting shulker");
-        Inventory inventory = MinecraftClient.getInstance().player.getInventory();
 
+        boolean canQuickMove = true;
+        boolean returnQuickMove = false;
         cancelUpdatesSyncId = sh.syncId;
-        for(int i = 0; i < 27; i++){
-            if(inventory.getStack(i+9).getItem().getClass() != FilledMapItem.class){
-                continue;
-            }
-            moveOne(i+27, i);
+
+        List<Integer> mapsInShulker = new ArrayList<>();
+
+        for (int slot = 0; slot < 27; slot++) {
+            ItemStack stackToMove = sh.getSlot(slot + 27).getStack();
+            ItemStack destinationStack = sh.getSlot(slot).getStack();
+
+            if (destinationStack.getItem() == Items.FILLED_MAP)
+                mapsInShulker.add(destinationStack.get(DataComponentTypes.MAP_ID).id());
+
+            if (stackToMove.getItem() == Items.FILLED_MAP) {
+                if (canQuickMove) {
+                    if (!ScreenHandler.canInsertItemIntoSlot(sh.getSlot(slot), stackToMove, false)) {
+                        canQuickMove = false;
+                        if (mapsInShulker.contains(stackToMove.get(DataComponentTypes.MAP_ID).id())) {
+                            returnQuickMove = true;
+                        }
+                    }
+                }
+
+                if (StalpoMapartHelper.mapNamerToggled) {
+                    if (canQuickMove) quickMove(slot + 27);
+                    else moveStack(slot + 27, slot);
+                } else {
+                    if (stackToMove.getCount() == 1 && ScreenHandler.canInsertItemIntoSlot(sh.getSlot(slot), stackToMove, false)) {
+                        if (canQuickMove) quickMove(slot + 27);
+                        else moveStack(slot + 27, slot);
+                    } else moveOne(slot + 27, slot);
+                }
+
+                if (!sh.getCursorStack().isEmpty()) pickUp(slot + 27, 0);
+                if (returnQuickMove) {
+                    canQuickMove = true;
+                    returnQuickMove = false;
+                }
+            } else canQuickMove = false;
+
         }
         cancelUpdatesSyncId = NO_SYNC_ID;
     }
@@ -317,7 +348,6 @@ public class MapartShulker {
         }
         cancelUpdatesSyncId = NO_SYNC_ID;
     }
-
 
     public static void copyMaps() {
         StalpoMapartHelper.LOGCHAT("Copying maps");
@@ -436,29 +466,28 @@ public class MapartShulker {
         StalpoMapartHelper.LOGCHAT("Finished locking maps");
     }
 
+    public static int syncInventory(int syncId) {
+        // hard to force the server to send the current state of the current opened container
+        // but seems like it works well for the inventory (sync id 0)
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc.player == null) return -1;
+
+        Int2ObjectMap<ItemStack> int2ObjectMap = new Int2ObjectOpenHashMap<>();
+        int2ObjectMap.put(1, new ItemStack(Items.BEDROCK, 64));
+
+        MinecraftClient.getInstance().player.networkHandler
+                .sendPacket(new ClickSlotC2SPacket(
+                        syncId, mc.player.playerScreenHandler.getRevision(),
+                        0, 0, SlotActionType.PICKUP, new ItemStack(Items.BEDROCK, 64), int2ObjectMap));
+
+        return mc.player.playerScreenHandler.getRevision();
+    }
+
     public static int findByMapId(PlayerInventory inventory, int mapId) {
-        int timer = 0;
-        do {
             for (int slot = 0; slot < 45; slot++) {
-                if (inventory.getStack(slot).getItem().getClass() != FilledMapItem.class) {
-                    StalpoMapartHelper.LOG("[debug] slot: " + slot + "; item: " + inventory.getStack(slot).getItem().getName().getString());
-                    continue;
-                }
-                StalpoMapartHelper.LOG("[debug] slot: " + slot + "; map id: " + inventory.getStack(slot).get(DataComponentTypes.MAP_ID).id()
-                        + " required: " + mapId + "; result: " + (inventory.getStack(slot).get(DataComponentTypes.MAP_ID).id() == mapId));
-                if (inventory.getStack(slot).get(DataComponentTypes.MAP_ID).id() == mapId) {
-                    return slot;
-                }
+                if (inventory.getStack(slot).getItem().getClass() != FilledMapItem.class) continue;
+                if (inventory.getStack(slot).get(DataComponentTypes.MAP_ID).id() == mapId) return slot;
             }
-            timer++;
-
-            try { TimeUnit.MILLISECONDS.sleep(50); } catch (InterruptedException ignored) { }
-            StalpoMapartHelper.LOG("Tryng to find a map. Times: " + timer);
-
-            // INVENTORY CAN BE DESYNCED OR NOT UPDATED YET WE ARE WAITING FOR SYNCHRONIZE DON'T ASK ME PLEASE IT WORKS AFTER ALL
-            // TODO: trust the server :)
-        } while (timer < 50);
-
         return -1;
     }
 
@@ -466,16 +495,13 @@ public class MapartShulker {
         // This function checks for the right map sequence after an anvil breaks. Please don't use it somewhere else.
         // Things we know for now (no need to check them):
         // 1. An anvil has broken, so our gui is closed
-        // 2. We DO have maps provided in "MapartShulker.mapsSequence" in the inventory
+        // 2. We DO have maps provided in "MapartShulker.mapsOrder" in the inventory
 
         StalpoMapartHelper.LOG("sorting inventory");
-        do { try { TimeUnit.MILLISECONDS.sleep(5); } catch (InterruptedException ignored) { }
-        } while (MinecraftClient.getInstance().player.currentScreenHandler instanceof AnvilScreenHandler);
 
         MinecraftClient mc = MinecraftClient.getInstance();
-        mc.player.currentScreenHandler = MinecraftClient.getInstance().player.playerScreenHandler;
+        mc.player.currentScreenHandler = mc.player.playerScreenHandler;
         sh = MinecraftClient.getInstance().player.currentScreenHandler;
-        int syncId = MinecraftClient.getInstance().player.playerScreenHandler.syncId;
 
         // after renaming, a map can be inside crafting slots
         // now i check maps if they aren't in their slot. This approach can easily deal with desyncs
@@ -483,67 +509,44 @@ public class MapartShulker {
             if (sh.getSlot(slot).getStack().getItem().getClass() != FilledMapItem.class) continue;
 
             int currentMapId = sh.getSlot(slot).getStack().get(DataComponentTypes.MAP_ID).id();
-            if (!mapsSequence.containsKey(currentMapId)) continue;
-
-            if (slot != mapsSequence.get(currentMapId)) {
-                mc.interactionManager.clickSlot(syncId, slot, 0, SlotActionType.PICKUP, mc.player);
+            int slotForThisMap = mapsOrder.getSlotByMapId(currentMapId) + 9;
+            if (slot != slotForThisMap) { // silent swap. Can't use StalpoClicker while gui is closed
+                mc.interactionManager.clickSlot(0, slot, 0, SlotActionType.PICKUP, mc.player);
                 sleep();
-                mc.interactionManager.clickSlot(syncId, mapsSequence.get(currentMapId), 0, SlotActionType.PICKUP, mc.player);
+                mc.interactionManager.clickSlot(0, slotForThisMap, 0, SlotActionType.PICKUP, mc.player);
                 sleep();
-
-                // THEN we synchronize previous and next slots
-                if (slot - 1 > 8) {
-                    mc.interactionManager.clickSlot(syncId, slot - 1, 0, SlotActionType.PICKUP, mc.player);
-                    sleep();
-                    mc.interactionManager.clickSlot(syncId, slot - 1, 0, SlotActionType.PICKUP, mc.player);
-                    sleep();
-                }
-                if (slot + 1 < 45) {
-                    mc.interactionManager.clickSlot(syncId, slot + 1, 0, SlotActionType.PICKUP, mc.player);
-                    sleep();
-                    mc.interactionManager.clickSlot(syncId, slot + 1, 0, SlotActionType.PICKUP, mc.player);
-                    sleep();
-                }
             }
         }
     }
 
     public static void nameMaps() {
+        boolean mapartIsDone = false;
         anvilBroken = false;
-        lastMapId = -1;
-        // this sequence should be in "net.stalpo.stalpomaparthelper.sequence" folder as it is like mapId: mapSlot.
-        // We probably will use it in the future more frequently.
-        mapsSequence = new HashMap<>();
         cancelUpdatesSyncId = sh.syncId;
 
         MinecraftClient mc = MinecraftClient.getInstance();
         int currentExpLevel = mc.player.experienceLevel;
 
         sequence.carryOverSequence = true;
-
-        // searching for last map in inventory. Check AnvilSoundSuppressMixin
-        for (int i = 30; i > 2; i--) {
-            if (sh.getSlot(i).getStack().getItem().getClass() == FilledMapItem.class) {
-                lastMapId = sh.getSlot(i).getStack().get(DataComponentTypes.MAP_ID).id();
-                break;
-            }
-        }
+        mapsOrder = new MapIdSequence(3, mc.player.currentScreenHandler.getStacks());
+        receivedSlots = sh.getStacks().stream().map(itemStack -> itemStack.getName().getString()).toList();
 
         // 0-2 - anvil slots
         // 3-29 - inventory
         // 30-38 - hotbar
         for (int i = 3; i < 30; i++) {
             if (anvilBroken) return;
-            if (sequence.reachedEnd()) break;
+            if (sequence.reachedEnd()) {
+                mapartIsDone = true;
+                break;
+            }
 
-            if (sh.getSlot(i).getStack().getItem().getClass() != FilledMapItem.class) continue;
-
-            mapsSequence.put(sh.getSlot(i).getStack().get(DataComponentTypes.MAP_ID).id(), i + 6); // the slot index should be as in playerScreenHandler
+            if (sh.getSlot(i).getStack().getItem() != Items.FILLED_MAP) continue;
 
             // skip already renamed maps
             if (sequence.isFollowingSequence(sh.getSlot(i).getStack().getName().getString())) {
                 if (sequence.carryOverSequence) {
-                    StalpoMapartHelper.LOGCHAT("Previous indexes were updated.\nx: " + sequence.getCurrX() + ",  y: " + sequence.getCurrY());
+                    StalpoMapartHelper.LOGCHAT("Previous indexes has been updated.\nx: " + sequence.getCurrX() + ",  y: " + sequence.getCurrY());
                     sequence.carryOverSequence = false;
                 }
                 sequence.increment();
@@ -559,32 +562,59 @@ public class MapartShulker {
 
             String newName = sequence.getCurrentMapName();
             quickMove(i);
+            sh.nextRevision();
 
             ((AnvilScreenHandler) sh).setNewItemName(newName);
+            int cost = ((AnvilScreenHandler) sh).getLevelCost();
 
             mc.player.networkHandler.sendPacket(new RenameItemC2SPacket(newName));
+            sh.nextRevision();
 
-            moveStack(2, i);
+            try {
+                moveStack(2, i);
+            } catch (NullPointerException exception) {
+                return;
+            } // Anvil has broken
+
             // fix client-side desync (for some reason this slot doesn't update as fast as we need)
             sh.setStackInSlot(0, sh.getRevision(), ItemStack.EMPTY);
 
-            currentExpLevel--;
+            currentExpLevel -= cost;
             sequence.increment();
         }
 
+        // zero-tick causes a visual bug a stack being present in the output anvil slot
+        try {
+            TimeUnit.MILLISECONDS.sleep(10);
+        } catch (InterruptedException ignored) {
+        }
+        sh.setStackInSlot(0, sh.getRevision(), ItemStack.EMPTY);
+
+        // I wanted to wait for a specific revision number,  but it's completely unpredictable
+        // so, we save the current inventory state and waiting for it to be received from the server
+        // Through hours of tests I discovered this approach is not fully stable. But I renamed more than 500 maps and it was fine
+        List<String> thisSlots = sh.getStacks().stream().map(itemStack -> itemStack.getName().getString()).toList();
+
         cancelUpdatesSyncId = NO_SYNC_ID;
 
-        // here in 99% cases each map has been renamed and the anvil hasn't broken
-        // so, we wait some time (ping-related thing. It's better to wait for a specific revision)
-        try { TimeUnit.MILLISECONDS.sleep(150); } catch (InterruptedException ignored) { }
-        if (anvilBroken) return;
 
-        // I want to play another sound if ALL maps have been renamed
-        // we can face a broken anvil on the last renamed map, so we are waiting for anvil gui to close
-        // if it closed, then check AnvilGuiClosedMixin
-        // if it didn't close, then anvil didn't break, so we can play a sound
+        int somethingWentWrong = 500;  // 500 ms is a mid-value even for the high ping
+        int timeout = 10;
+
+        while (!receivedSlots.equals(thisSlots)) {
+            if (anvilBroken || !(mc.currentScreen instanceof AnvilScreen)) return;
+            try {
+                TimeUnit.MILLISECONDS.sleep(timeout);
+            } catch (InterruptedException ignored) {
+            }
+            somethingWentWrong -= timeout;
+
+            if (somethingWentWrong <= 0) break;
+        }
+
         mc.getSoundManager().play(PositionedSoundInstance.master(RenameFinishedSound, 1.0F, 2.0F));
-        StalpoMapartHelper.LOGCHAT("§2Finished naming shulk!");
+        if (mapartIsDone) StalpoMapartHelper.LOGCHAT("§2Finished naming map art!");
+        else StalpoMapartHelper.LOGCHAT("§2Finished naming shulk!");
     }
     
     public static void sleep() {

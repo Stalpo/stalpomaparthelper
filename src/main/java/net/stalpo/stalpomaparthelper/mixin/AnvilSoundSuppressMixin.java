@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.regex.Matcher;
+import java.util.concurrent.TimeUnit;
 
 @Mixin(AbstractSoundInstance.class)
 public class AnvilSoundSuppressMixin {
@@ -46,27 +46,34 @@ public class AnvilSoundSuppressMixin {
 
     @Unique
     private void executeAfterAnvilBreak() {
+        int thisRevision = MapartShulker.syncInventory(0);
+        // waiting for the revision
+        int somtehingWentWrong = 1000;
+        int timeout = 10;
+        while (MinecraftClient.getInstance().player.playerScreenHandler.getRevision() < thisRevision + 1) {
+            try {TimeUnit.MILLISECONDS.sleep(timeout);} catch (InterruptedException ignored) {}
+            somtehingWentWrong -= timeout;
+            if (somtehingWentWrong <= 0) break;
+        }
         Util.getIoWorkerExecutor().execute(MapartShulker::sortInventoryAfterRename);
 
         // if THE LAST map has been renamed, then play MapartShulker.RenameFinishedSound
 
-        if (MapartShulker.lastMapId == -1) {
+        if (MapartShulker.mapsOrder.getLastMapid() == -1) {
             MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(MapartShulker.AnvilBrokenSound, 1.0F));
             StalpoMapartHelper.LOGCHAT("§6Anvil has broken!");
             return;
         }
 
-        int lastMapSlot = MapartShulker.findByMapId(MinecraftClient.getInstance().player.getInventory(), MapartShulker.lastMapId);
-        // how is it possible?? Well, I just left it here!
+        int lastMapSlot = MapartShulker.findByMapId(MinecraftClient.getInstance().player.getInventory(), MapartShulker.mapsOrder.getLastMapid());
+
+        // how is it possible??
         if (lastMapSlot == -1) {
             MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(MapartShulker.AnvilBrokenSound, 1.0F));
             StalpoMapartHelper.LOGCHAT("§6Anvil has broken!");
-            return;
         }
 
-        Matcher checkName = MapartShulker.namePattern.matcher(MinecraftClient.getInstance().player.getInventory().getStack(lastMapSlot).getName().getString());
-
-        if (checkName.matches()) {
+        if (MapartShulker.sequence.isFollowingSequence(MinecraftClient.getInstance().player.getInventory().getStack(lastMapSlot).getName().getString())) {
             MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(MapartShulker.RenameFinishedSound, 1.0F, 2.0F));
             return;
         }
@@ -74,5 +81,4 @@ public class AnvilSoundSuppressMixin {
         MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(MapartShulker.AnvilBrokenSound, 1.0F));
         StalpoMapartHelper.LOGCHAT("§6Anvil has broken!");
     }
-
 }

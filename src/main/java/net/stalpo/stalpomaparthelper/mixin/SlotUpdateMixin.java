@@ -10,6 +10,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.ArrayList;
+
 // this mixin blocks inventory sync packets from the server
 // inventory state on the client perfectly matches real state
 // so it doesn't need to be force-synced
@@ -30,11 +32,16 @@ public class SlotUpdateMixin {
     private void onSlotUpdate(InventoryS2CPacket packet, CallbackInfo ci) {
         MinecraftClient mc = MinecraftClient.getInstance();
 
+        MapartShulker.receivedSlots = new ArrayList<>(packet.getContents())
+                .stream()
+                .map(itemStack -> itemStack.getName().getString()).toList();
+
         if (mc.player == null || mc.currentScreen == null) return;
         if (mc.player.currentScreenHandler.syncId != packet.getSyncId()) return;
 
         if (MapartShulker.cancelUpdatesSyncId == packet.getSyncId()) {
             ci.cancel();
+
         } else if (packet.getRevision() == 1 && MapartShulker.callSoon.containsKey(packet.getSyncId())) {
             mc.player.currentScreenHandler.updateSlotStacks(1, packet.getContents(), packet.getCursorStack());
 
